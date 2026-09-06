@@ -1,0 +1,1079 @@
+{
+  "info": {
+    "_postman_id": "146a2b2e-b3d8-4d2b-966a-8c66fd3bd278",
+    "name": "Colegio",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "7191688"
+  },
+  "item": [
+    {
+      "name": "AniosLectivos",
+      "item": [
+        {
+          "name": "CrearAnio",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json(); // Parsear la respuesta JSON\r",
+                  "const id_anio_lectivo = response.id_anio_lectivo; // Acceder a la propiedad idNegocio\r",
+                  "pm.environment.set(\"id_anio_lectivo\", id_anio_lectivo); // Guardar el valor en la variable de entorno\r",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"anio\":2026,\r\n    \"nombre\":\"Nombre Anio\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/v1/anios-lectivos",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "v1",
+                "anios-lectivos"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Anios",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/v1/anios-lectivos",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "v1",
+                "anios-lectivos"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener detalle anio",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/v1/anios-lectivos/{{id_anio_lectivo}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "v1",
+                "anios-lectivos",
+                "{{id_anio_lectivo}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener detalle anio Copy",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"anio\":2031\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/v1/anios-lectivos/6",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "v1",
+                "anios-lectivos",
+                "6"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Niveles",
+      "item": [
+        {
+          "name": "CrearNivel",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json(); // Parsear la respuesta JSON\r",
+                  "const id_nivel = response.id_nivel; // Acceder a la propiedad idNegocio\r",
+                  "const id_anio_lectivo = response.id_anio_lectivo; // Acceder a la propiedad idNegocio\r",
+                  "pm.environment.set(\"id_nivel\", id_nivel); // Guardar el valor en la variable de entorno\r",
+                  "pm.environment.set(\"id_anio_lectivo\", id_anio_lectivo); // Guardar el valor en la variable de entorno"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"id_anio_lectivo\": 1,\r\n    \"nombre\":\"Nocturna\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/v1/niveles",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "v1",
+                "niveles"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar niveles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/v1/niveles?id_anio_lectivo={{id_anio_lectivo}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "v1",
+                "niveles"
+              ],
+              "query": [
+                {
+                  "key": "id_anio_lectivo",
+                  "value": "{{id_anio_lectivo}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener detalle anio",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/v1/niveles/{{id_nivel}}?id_anio_lectivo={{id_anio_lectivo}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "v1",
+                "niveles",
+                "{{id_nivel}}"
+              ],
+              "query": [
+                {
+                  "key": "id_anio_lectivo",
+                  "value": "{{id_anio_lectivo}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener detalle anio Copy",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"id_anio_lectivo\": {{id_anio_lectivo}},\r\n    \"nombre\":\"Nocturna v2\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/v1/niveles/{{id_nivel}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "v1",
+                "niveles",
+                "{{id_nivel}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Grados",
+      "item": [
+        {
+          "name": "CrearNivel",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json(); // Parsear la respuesta JSON\r",
+                  "const id_nivel = response.id_nivel; // Acceder a la propiedad idNegocio\r",
+                  "const id_grado = response.id_grado; // Acceder a la propiedad idNegocio\r",
+                  "pm.environment.set(\"id_nivel\", id_nivel); // Guardar el valor en la variable de entorno\r",
+                  "pm.environment.set(\"id_grado\", id_grado); // Guardar el valor en la variable de entorno"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"id_nivel\": {{id_nivel}},\r\n    \"nombre\":\"Segundo\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/v1/grados",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "v1",
+                "grados"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar niveles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/v1/grados?id_nivel={{id_nivel}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "v1",
+                "grados"
+              ],
+              "query": [
+                {
+                  "key": "id_nivel",
+                  "value": "{{id_nivel}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener detalle anio",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/v1/grados/{{id_grado}}?id_nivel={{id_nivel}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "v1",
+                "grados",
+                "{{id_grado}}"
+              ],
+              "query": [
+                {
+                  "key": "id_nivel",
+                  "value": "{{id_nivel}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener detalle anio Copy",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"id_nivel\": {{id_nivel}},\r\n    \"nombre\":\"Tercero v2\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/v1/grado/{{id_grado}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "v1",
+                "grado",
+                "{{id_grado}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Secciones",
+      "item": [
+        {
+          "name": "Crear Secciones",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json(); // Parsear la respuesta JSON\r",
+                  "const id_seccion = response.id_seccion; // Acceder a la propiedad idNegocio\r",
+                  "pm.environment.set(\"id_seccion\", id_seccion); // Guardar el valor en la variable de entorno"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"id_grado\": {{id_grado}},\r\n    \"nombre\":\"B\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/v1/secciones",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "v1",
+                "secciones"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Secciones",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/v1/secciones?id_grado={{id_grado}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "v1",
+                "secciones"
+              ],
+              "query": [
+                {
+                  "key": "id_grado",
+                  "value": "{{id_grado}}",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener detalle anio",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/v1/secciones/{{id_seccion}}?id_grado={{id_grado}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "v1",
+                "secciones",
+                "{{id_seccion}}"
+              ],
+              "query": [
+                {
+                  "key": "id_grado",
+                  "value": "{{id_grado}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener detalle anio Copy",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"id_grado\": {{id_grado}},\r\n    \"nombre\": \"C\",\r\n    \"estado\": true\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/v1/secciones/{{id_seccion}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "v1",
+                "secciones",
+                "{{id_seccion}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "cursos",
+      "item": [
+        {
+          "name": "Crear Curso",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json(); // Parsear la respuesta JSON\r",
+                  "const id_anio_lectivo = response.id_anio_lectivo; // Acceder a la propiedad idNegocio\r",
+                  "const id_curso = response.id_curso; // Acceder a la propiedad idNegocio\r",
+                  "pm.environment.set(\"id_anio_lectivo\", id_anio_lectivo); // Guardar el valor en la variable de entorno\r",
+                  "pm.environment.set(\"id_curso\", id_curso); // Guardar el valor en la variable de entorno"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"id_anio_lectivo\": {{id_anio_lectivo}},\r\n    \"nombre\":\"Matematica\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/v1/cursos",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "v1",
+                "cursos"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar cursos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/v1/cursos?d_anio_lectivo={{id_anio_lectivo}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "v1",
+                "cursos"
+              ],
+              "query": [
+                {
+                  "key": "d_anio_lectivo",
+                  "value": "{{id_anio_lectivo}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener detalle anio",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/v1/cursos/{{id_curso}}?id_anio_lectivo={{id_anio_lectivo}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "v1",
+                "cursos",
+                "{{id_curso}}"
+              ],
+              "query": [
+                {
+                  "key": "id_anio_lectivo",
+                  "value": "{{id_anio_lectivo}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener detalle anio Copy",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"nombre\": \"Personal Social\",\r\n    \"estado\": false,\r\n    \"id_anio_lectivo\": {{id_anio_lectivo}}\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/v1/cursos/{{id_curso}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "v1",
+                "cursos",
+                "{{id_curso}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Docente",
+      "item": [
+        {
+          "name": "Crear Docente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json(); // Parsear la respuesta JSON\r",
+                  "const docente = response.docente; // Acceder a la propiedad idNegocio\r",
+                  "const usuario = response.usuario; // Acceder a la propiedad idNegocio\r",
+                  "pm.environment.set(\"id_docente\", docente.id_docente); // Guardar el valor en la variable de entorno\r",
+                  "pm.environment.set(\"id_usuario\", usuario.id_usuario); // Guardar el valor en la variable de entorno"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"nombres\": \"Hugo\",\r\n  \"apellido_paterno\": \"Flores\",\r\n  \"apellido_materno\": \"Rodriguez 2\",\r\n  \"correo\": \"hugo.flores2@escuela.pe\",\r\n  \"dni\": \"87654322\",\r\n  \"indUsuario\": true\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/v1/docentes",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "v1",
+                "docentes"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar niveles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/v1/docentes",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "v1",
+                "docentes"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener detalle anio",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/v1/docentes/{{id_docente}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "v1",
+                "docentes",
+                "{{id_docente}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener detalle anio Copy",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"id_usuario\": 2,\r\n    \"nombres\": \"Hugo\",\r\n    \"apellido_paterno\": \"Flores\",\r\n    \"apellido_materno\": \"Rodriguez modificado\",\r\n    \"dni\": \"87654322\",\r\n    \"telefono\": null,\r\n    \"correo\": \"hugo.flores2@escuela.pe\",\r\n    \"estado\": false\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/v1/docentes/{{id_docente}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "v1",
+                "docentes",
+                "{{id_docente}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Alumno",
+      "item": [
+        {
+          "name": "Crear Alumno",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json(); // Parsear la respuesta JSON\r",
+                  "const docente = response.docente; // Acceder a la propiedad idNegocio\r",
+                  "const id_estudiante = response.id_estudiante; // Acceder a la propiedad idNegocio\r",
+                  "pm.environment.set(\"id_estudiante\", id_estudiante); // Guardar el valor en la variable de entorno"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"nombres\": \"Hugo\",\r\n  \"apellido_paterno\": \"Flores\",\r\n  \"apellido_materno\": \"Rodriguez 2\",\r\n  \"fecha_nacimiento\": \"1996-02-18\",\r\n  \"dni\": \"87654322\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/v1/estudiantes",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "v1",
+                "estudiantes"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar estudiantes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/v1/estudiantes",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "v1",
+                "estudiantes"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener detalle estudiante",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/v1/estudiantes/{{id_estudiante}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "v1",
+                "estudiantes",
+                "{{id_estudiante}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener detalle anio Copy",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"nombres\": \"Hugo\",\r\n    \"apellido_paterno\": \"Flores\",\r\n    \"apellido_materno\": \"Estudiante modificado\",\r\n    \"dni\": \"87654322\",\r\n    \"fecha_nacimiento\": \"1996-02-18\",\r\n    \"estado\": true\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/v1/estudiantes/{{id_estudiante}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "v1",
+                "estudiantes",
+                "{{id_estudiante}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Programacion Secciones",
+      "item": [
+        {
+          "name": "Crear Programcion Seccion",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json(); // Parsear la respuesta JSON\r",
+                  "const id_programacion_seccion = response.id_programacion_seccion; // Acceder a la propiedad idNegocio\r",
+                  "pm.environment.set(\"id_programacion_seccion\", id_programacion_seccion); // Guardar el valor en la variable de entorno"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"id_seccion\": {{id_seccion}},\r\n  \"id_docente_responsable\": {{id_docente}}\r\n} ",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/v1/programacion-secciones",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "v1",
+                "programacion-secciones"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar programacion seccion",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/v1/programacion-secciones",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "v1",
+                "programacion-secciones"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener programacion seccion",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/v1/programacion-secciones/{{id_programacion_seccion}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "v1",
+                "programacion-secciones",
+                "{{id_programacion_seccion}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener programacion seccion",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"id_seccion\": {{id_seccion}},\r\n    \"id_docente_responsable\": {{id_docente}},\r\n    \"estado\": false\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/v1/programacion-secciones/{{id_programacion_seccion}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "v1",
+                "programacion-secciones",
+                "{{id_programacion_seccion}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Programacion curso",
+      "item": [
+        {
+          "name": "Crear Programacion curso",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json(); // Parsear la respuesta JSON\r",
+                  "const id_programacion_seccion = response.id_programacion_seccion;\r",
+                  "const id_programacion_curso = response.id_programacion_curso;\r",
+                  "pm.environment.set(\"id_programacion_seccion\", id_programacion_seccion); \r",
+                  "pm.environment.set(\"id_programacion_curso\", id_programacion_curso); "
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"id_programacion_seccion\":{{id_programacion_seccion}},\r\n  \"id_curso\": {{id_curso}},\r\n  \"id_docente\": {{id_docente}}\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/v1/programacion-cursos",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "v1",
+                "programacion-cursos"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Programacion curso",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/v1/programacion-cursos",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "v1",
+                "programacion-cursos"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Programacion curso",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/v1/programacion-cursos/{{id_programacion_curso}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "v1",
+                "programacion-cursos",
+                "{{id_programacion_curso}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Programacion curso",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"id_programacion_seccion\": {{id_programacion_seccion}},\r\n    \"id_curso\": {{id_curso}},\r\n    \"id_docente\": {{id_docente}},\r\n    \"estado\": false\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/v1/programacion-cursos/{{id_programacion_curso}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "v1",
+                "programacion-cursos",
+                "{{id_programacion_curso}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

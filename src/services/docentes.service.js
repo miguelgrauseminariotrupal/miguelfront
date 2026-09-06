@@ -1,0 +1,4 @@
+import { apiGet, apiPost, apiPut, extractList } from "./api";
+export async function getDocentes({ signal } = {}) { return extractList(await apiGet("/v1/docentes", { signal })); }
+export function createDocente(value) { return apiPost("/v1/docentes", { nombres: value.nombres.trim(), apellido_paterno: value.apellido_paterno.trim(), apellido_materno: value.apellido_materno.trim(), correo: value.correo.trim(), dni: value.dni.trim(), indUsuario: Boolean(value.indUsuario) }); }
+export function updateDocente(id, value) { return apiPut(`/v1/docentes/${id}`, { ...(value.id_usuario ? { id_usuario: Number(value.id_usuario) } : {}), nombres: value.nombres.trim(), apellido_paterno: value.apellido_paterno.trim(), apellido_materno: value.apellido_materno.trim(), dni: value.dni.trim(), telefono: value.telefono?.trim() || null, correo: value.correo.trim(), estado: Boolean(value.estado) }); }
