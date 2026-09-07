@@ -1,4 +1,4 @@
-import { Bot, CalendarCheck, ClipboardCheck, GraduationCap, Home, Presentation, Settings2, Users, X } from "lucide-react";
+import { Bot, BookOpen, CalendarCheck, ClipboardCheck, GraduationCap, Home, Presentation, Settings2, Users, X } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 const menuItems = [
@@ -9,7 +9,8 @@ const menuItems = [
   { label: "Configuración", path: "/configuracion", icon: Settings2 },
   { label: "Docentes", path: "/docentes", icon: Presentation },
   { label: "Alumnos", path: "/alumnos", icon: GraduationCap },
-  { label: "Programación", path: "/programacion", icon: Users },
+  { label: "Cursos", path: "/cursos", icon: BookOpen },
+  { label: "Registro Clase", path: "/programacion", icon: Users },
 ];
 
 export default function Sidebar({ open, onClose }) {

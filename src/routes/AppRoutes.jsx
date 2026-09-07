@@ -10,6 +10,7 @@ import ParametrosPage from "../pages/ParametrosPage";
 import DocentesPage from "../pages/DocentesPage";
 import AlumnosPage from "../pages/AlumnosPage";
 import ProgramacionPage from "../pages/ProgramacionPage";
+import CursosPage from "../pages/CursosPage";
 
 function PrivateRoute() {
   const { isAuthenticated } = useAuth();
@@ -33,6 +34,7 @@ export default function AppRoutes() {
         <Route path="/configuracion" element={<ParametrosPage />} />
         <Route path="/docentes" element={<DocentesPage />} />
         <Route path="/alumnos" element={<AlumnosPage />} />
+        <Route path="/cursos" element={<CursosPage />} />
         <Route path="/programacion" element={<ProgramacionPage />} />
         <Route path="/parametros" element={<Navigate to="/configuracion" replace />} />
       </Route>
