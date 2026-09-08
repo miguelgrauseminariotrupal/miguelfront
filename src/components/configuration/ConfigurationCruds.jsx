@@ -149,18 +149,20 @@ export function ProgramacionSeccionesCrud({ onEdit }) {
   const initial = { id: "", id_seccion: "", id_docente_responsable: "", estado_completado: "false" };
   const loadFiltered = useCallback(async () => {
     if (!academic.grado) return [];
-    const records = await getProgramacionSecciones();
+    const [records, courseAssignments] = await Promise.all([getProgramacionSecciones(), getProgramacionCursos({ estado: true })]);
     const anio = academic.anios.find((item) => text(item.id_anio_lectivo) === text(academic.anio));
     const nivel = academic.niveles.find((item) => text(item.id_nivel) === text(academic.nivel));
     const grado = academic.grados.find((item) => text(item.id_grado) === text(academic.grado));
     return academic.secciones.map((seccion) => {
       const record = records.find((item) => text(item.id_seccion) === text(seccion.id_seccion));
-      return { ...record, row_key: seccion.id_seccion, id_seccion: seccion.id_seccion, seccion, academic_context: { anio, nivel, grado, seccion } };
+      const hasResponsibleTeacher = Boolean(record?.id_docente_responsable);
+      const hasActiveCourse = Boolean(record?.id_programacion_seccion) && courseAssignments.some((item) => item.estado !== false && text(item.id_programacion_seccion) === text(record.id_programacion_seccion));
+      return { ...record, estado_completado: hasResponsibleTeacher && hasActiveCourse, row_key: seccion.id_seccion, id_seccion: seccion.id_seccion, seccion, academic_context: { anio, nivel, grado, seccion } };
     });
   }, [academic.anio, academic.nivel, academic.grado, academic.anios, academic.niveles, academic.grados, academic.secciones]);
   return <CrudPanel initial={initial} load={loadFiltered} idOf={(x) => x.row_key} noun="Registro de sección" canOperate={Boolean(academic.grado)} showActions={false} autoShowResults resultsTrigger={academic.grado} onEditItem={onEdit}
     filters={<div className="parameter-filters"><Field label="Año lectivo" name="registroAnio" value={academic.anio} onChange={changeAnio}>{academic.anios.map((x) => <option key={x.id_anio_lectivo} value={x.id_anio_lectivo}>{x.anio}</option>)}</Field><Field label="Nivel" name="registroNivel" value={academic.nivel} onChange={changeNivel} disabled={!academic.anio}>{academic.niveles.map((x) => <option key={x.id_nivel} value={x.id_nivel}>{x.nombre}</option>)}</Field><Field label="Grado" name="registroGrado" value={academic.grado} onChange={changeGrado} disabled={!academic.nivel}>{academic.grados.map((x) => <option key={x.id_grado} value={x.id_grado}>{x.nombre}</option>)}</Field></div>}
-    columns={[{ label: "Sección", value: (x) => x.seccion?.nombre }, { label: "Docente responsable", value: (x) => personName(x.docente_responsable || x.docente || {}) || (docentes.find((item) => text(item.id_docente) === text(x.id_docente_responsable)) ? personName(docentes.find((item) => text(item.id_docente) === text(x.id_docente_responsable))) : "Sin asignar") }, { label: "Estado", value: (x) => x.id_programacion_seccion ? (x.estado_completado ? "Completado" : "Pendiente") : "Sin registro" }]}
+    columns={[{ label: "Sección", value: (x) => x.seccion?.nombre }, { label: "Docente responsable", value: (x) => personName(x.docente_responsable || x.docente || {}) || (docentes.find((item) => text(item.id_docente) === text(x.id_docente_responsable)) ? personName(docentes.find((item) => text(item.id_docente) === text(x.id_docente_responsable))) : "Sin asignar") }, { label: "Estado", value: (x) => x.estado_completado ? "Completado" : "Pendiente" }]}
     validate={(f) => !f.id_seccion || !f.id_docente_responsable ? "Selecciona la sección y el docente responsable." : ""} save={(f) => f.id ? updateProgramacionSeccion(f.id, f.id_seccion, f.id_docente_responsable, f.estado_completado === "true") : createProgramacionSeccion(f.id_seccion, f.id_docente_responsable)} editValues={(x) => ({ ...initial, id: x.id_programacion_seccion, id_seccion: text(x.id_seccion), id_docente_responsable: text(x.id_docente_responsable), estado_completado: String(Boolean(x.estado_completado)) })} renderFields={(f, c) => <><Field label="Sección" name="id_seccion" value={f.id_seccion} onChange={c}>{academic.secciones.map((x) => <option key={x.id_seccion} value={x.id_seccion}>{x.nombre}</option>)}</Field><Field label="Docente responsable" name="id_docente_responsable" value={f.id_docente_responsable} onChange={c}>{docentes.map((x) => <option key={x.id_docente} value={x.id_docente}>{personName(x)}</option>)}</Field>{f.id && <Field label="Estado" name="estado_completado" value={f.estado_completado} onChange={c}><option value="false">Pendiente</option><option value="true">Completado</option></Field>}</>} />;
 }
 
