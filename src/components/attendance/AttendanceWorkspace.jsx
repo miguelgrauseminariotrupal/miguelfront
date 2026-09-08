@@ -1,6 +1,7 @@
 import { CalendarDays, ChevronLeft, ChevronRight, Users } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { getAlumno } from "../../services/alumnos.service";
+import { createAsistencia, getAsistencias, updateAsistencia } from "../../services/asistencias.service";
 import { getMatriculas } from "../../services/matriculas.service";
 import { getTiposAsistencia } from "../../services/tiposAsistencia.service";
 
@@ -9,15 +10,20 @@ const formatDate = (date) => new Intl.DateTimeFormat("es-PE", { weekday: "long",
 const fullName = (student) => [student.nombres, student.apellido_paterno, student.apellido_materno].filter(Boolean).join(" ");
 const initials = (student) => [student.nombres, student.apellido_paterno].filter(Boolean).map((part) => part.trim().charAt(0)).join("").toUpperCase();
 const typeTone = (code) => ({ A: "present", J: "justified", F: "absent", T: "late" }[code?.toUpperCase()] || "default");
+const dateValue = (date) => [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"), String(date.getDate()).padStart(2, "0")].join("-");
 
 export default function AttendanceWorkspace({ selection }) {
   const [period, setPeriod] = useState("dia");
   const [students, setStudents] = useState([]);
   const [attendanceTypes, setAttendanceTypes] = useState([]);
   const [attendance, setAttendance] = useState({});
+  const [savedAttendance, setSavedAttendance] = useState({});
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [feedback, setFeedback] = useState("");
   const today = useMemo(() => new Date(), []);
+  const todayDate = useMemo(() => dateValue(today), [today]);
   const sectionId = selection?.seccion;
   const filtersComplete = Boolean(selection?.anio && selection?.nivel && selection?.grado && sectionId);
 
@@ -31,22 +37,58 @@ export default function AttendanceWorkspace({ selection }) {
 
   useEffect(() => {
     const controller = new AbortController();
-    setStudents([]); setAttendance({}); setError("");
+    setStudents([]); setAttendance({}); setSavedAttendance({}); setError(""); setFeedback("");
     if (!sectionId) { setLoading(false); return () => controller.abort(); }
     setLoading(true);
     getMatriculas({ id_seccion: sectionId, estado: true, signal: controller.signal })
       .then(async (enrollments) => {
         const uniqueStudentIds = [...new Set(enrollments.map((item) => item.id_estudiante).filter(Boolean))];
-        const studentRecords = await Promise.all(uniqueStudentIds.map((id) => getAlumno(id, { signal: controller.signal })));
+        const [studentRecords, dailyAttendance] = await Promise.all([
+          Promise.all(uniqueStudentIds.map((id) => getAlumno(id, { signal: controller.signal }))),
+          getAsistencias({ fecha: todayDate, signal: controller.signal }),
+        ]);
         const enrollmentByStudent = new Map(enrollments.map((item) => [String(item.id_estudiante), item]));
         setStudents(studentRecords.map((student) => ({ ...student, enrollment: enrollmentByStudent.get(String(student.id_estudiante)) })));
+        const enrollmentIds = new Set(enrollments.map((item) => String(item.id_matricula)));
+        const records = Object.fromEntries(dailyAttendance.filter((item) => enrollmentIds.has(String(item.id_matricula))).map((item) => [String(item.id_matricula), item]));
+        setSavedAttendance(records);
+        setAttendance(Object.fromEntries(enrollments.map((item) => [String(item.id_estudiante), records[String(item.id_matricula)]?.id_tipo_asistencia]).filter(([, typeId]) => typeId != null)));
       })
       .catch((requestError) => { if (requestError.name !== "AbortError") setError(requestError.message || "No se pudieron cargar los estudiantes matriculados."); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [sectionId]);
+  }, [sectionId, todayDate]);
 
   const setStudentStatus = (studentId, typeId) => setAttendance((current) => ({ ...current, [studentId]: typeId }));
+
+  const saveAttendance = async () => {
+    if (!students.length) return;
+    if (students.some((student) => !attendance[String(student.id_estudiante)])) {
+      setFeedback("Selecciona un tipo de asistencia para todos los estudiantes.");
+      return;
+    }
+    setSaving(true);
+    setError("");
+    setFeedback("");
+    try {
+      const results = await Promise.all(students.map((student) => {
+        const enrollmentId = student.enrollment.id_matricula;
+        const payload = {
+          id_matricula: enrollmentId,
+          id_tipo_asistencia: attendance[String(student.id_estudiante)],
+          fecha: todayDate,
+        };
+        const existing = savedAttendance[String(enrollmentId)];
+        return existing ? updateAsistencia(existing.id_asistencia, payload) : createAsistencia(payload);
+      }));
+      setSavedAttendance(Object.fromEntries(results.map((item) => [String(item.id_matricula), item])));
+      setFeedback("Asistencia guardada correctamente.");
+    } catch (requestError) {
+      setError(requestError.message || "No se pudo guardar la asistencia.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return <section className="attendance-workspace">
     {!filtersComplete && <div className="demo-notice"><span>Selecciona una sección</span><p>Completa los filtros académicos para cargar los estudiantes matriculados.</p></div>}
@@ -68,7 +110,8 @@ export default function AttendanceWorkspace({ selection }) {
         </article>;
       })}
     </div>
-    <button className="attendance-save" type="button" disabled><CalendarDays size={17} />Guardar asistencia</button>
-    <p className="attendance-demo-caption">Selecciona un tipo de asistencia para cada estudiante.</p>
+    {feedback && <p className={`parameter-feedback ${feedback.includes("correctamente") ? "is-success" : "is-error"}`} role="status">{feedback}</p>}
+    <button className="attendance-save" type="button" disabled={loading || saving || students.length === 0} onClick={saveAttendance}><CalendarDays size={17} />{saving ? "Guardando..." : "Guardar asistencia"}</button>
+    <p className="attendance-demo-caption">La asistencia se registra con la fecha de hoy: {todayDate}.</p>
   </section>;
 }
