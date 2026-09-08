@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { getCursos } from "../../services/cursos.service";
 import { getDocentes } from "../../services/docentes.service";
 import { createProgramacionCurso, getProgramacionCursos, updateProgramacionCurso } from "../../services/programacionCursos.service";
+import { updateProgramacionSeccion } from "../../services/programacionSecciones.service";
 import TeacherSelector, { teacherFullName } from "./TeacherSelector";
 
 export default function CourseAssignmentPanel({ classRecord, onClose }) {
@@ -34,6 +35,12 @@ export default function CourseAssignmentPanel({ classRecord, onClose }) {
     setSaving(true); setFeedback({ type: "", message: "" });
     try {
       await Promise.all(selectedRows.map((row) => row.assignment ? updateProgramacionCurso(row.assignment.id_programacion_curso, { ...row.assignment, id_docente: row.teacher.id_docente, estado: true }) : createProgramacionCurso(classRecord.id_programacion_seccion, row.course.id_curso, row.teacher.id_docente)));
+      await updateProgramacionSeccion(
+        classRecord.id_programacion_seccion,
+        classRecord.id_seccion,
+        classRecord.id_docente_responsable,
+        selectedRows.length > 0,
+      );
       setFeedback({ type: "success", message: "Cursos asignados correctamente." });
     } catch { setFeedback({ type: "error", message: "No se pudieron guardar las asignaciones de cursos." }); }
     finally { setSaving(false); }
