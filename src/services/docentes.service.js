@@ -1,4 +1,9 @@
 import { apiGet, apiPost, apiPut, extractList } from "./api";
-export async function getDocentes({ signal } = {}) { return extractList(await apiGet("/v1/docentes", { signal })); }
-export function createDocente(value) { return apiPost("/v1/docentes", { nombres: value.nombres.trim(), apellido_paterno: value.apellido_paterno.trim(), apellido_materno: value.apellido_materno.trim(), correo: value.correo.trim(), dni: value.dni.trim(), indUsuario: Boolean(value.indUsuario) }); }
-export function updateDocente(id, value) { return apiPut(`/v1/docentes/${id}`, { ...(value.id_usuario ? { id_usuario: Number(value.id_usuario) } : {}), nombres: value.nombres.trim(), apellido_paterno: value.apellido_paterno.trim(), apellido_materno: value.apellido_materno.trim(), dni: value.dni.trim(), telefono: value.telefono?.trim() || null, correo: value.correo.trim(), estado: Boolean(value.estado) }); }
+
+const clean = (value) => value?.trim() || null;
+const flag = (value) => value === true || value === "true";
+
+export async function getDocentes({ estado, id_usuario, q, signal } = {}) { return extractList(await apiGet("/docentes", { params: { estado, id_usuario, q }, signal })); }
+export function getDocente(id, { signal } = {}) { return apiGet(`/docentes/${id}`, { signal }); }
+export function createDocente(value) { return apiPost("/docentes", { nombres: value.nombres.trim(), apellido_paterno: clean(value.apellido_paterno), apellido_materno: clean(value.apellido_materno), correo: clean(value.correo), dni: clean(value.dni), telefono: clean(value.telefono), indUsuario: flag(value.indUsuario), ...(value.id_usuario ? { id_usuario: Number(value.id_usuario) } : {}) }); }
+export function updateDocente(id, value) { return apiPut(`/docentes/${id}`, { ...(value.id_usuario ? { id_usuario: Number(value.id_usuario) } : {}), nombres: value.nombres.trim(), apellido_paterno: clean(value.apellido_paterno), apellido_materno: clean(value.apellido_materno), dni: clean(value.dni), telefono: clean(value.telefono), correo: clean(value.correo), estado: flag(value.estado) }); }

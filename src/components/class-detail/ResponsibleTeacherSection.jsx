@@ -16,14 +16,14 @@ export default function ResponsibleTeacherSection({ classRecord, onUpdated }) {
   const assign = async (selected) => {
     setFeedback({ type: "", message: "" });
     try {
-      if (classRecord.id_programacion_seccion) await updateProgramacionSeccion(classRecord.id_programacion_seccion, classRecord.id_seccion, selected.id_docente, classRecord.estado !== false);
+      if (classRecord.id_programacion_seccion) await updateProgramacionSeccion(classRecord.id_programacion_seccion, classRecord.id_seccion, selected.id_docente, classRecord.estado_completado === true);
       else await createProgramacionSeccion(classRecord.id_seccion, selected.id_docente);
       const records = await getProgramacionSecciones();
       const updated = records.find((item) => String(item.id_seccion) === String(classRecord.id_seccion));
       onUpdated?.({ ...classRecord, ...updated, docente_responsable: selected, id_docente_responsable: selected.id_docente });
       setFeedback({ type: "success", message: hasCurrentTeacher ? "Docente responsable actualizado correctamente." : "Docente responsable asignado correctamente." });
       setPickerOpen(false);
-    } catch { setFeedback({ type: "error", message: "No se pudo asignar el docente responsable." }); }
+    } catch (error) { setFeedback({ type: "error", message: error?.message || "No se pudo asignar el docente responsable." }); }
   };
   return <>
     <section className="responsible-teacher-card">

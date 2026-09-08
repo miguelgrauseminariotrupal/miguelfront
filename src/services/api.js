@@ -1,4 +1,9 @@
-const API_URL = import.meta.env.VITE_API_URL?.replace(/\/$/, "");
+const OPENAPI_SERVER_URL = "https://fqidwaafiojvcamzmilu.supabase.co/functions/v1";
+const configuredUrl = import.meta.env.VITE_API_URL?.trim().replace(/\/$/, "");
+const API_URL = configuredUrl
+  ? configuredUrl.endsWith("/functions") ? `${configuredUrl}/v1` : configuredUrl
+  : OPENAPI_SERVER_URL;
+const API_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim();
 
 export class ApiError extends Error {
   constructor(message, { status = null, cause = null } = {}) {
@@ -9,11 +14,8 @@ export class ApiError extends Error {
 }
 
 export async function apiRequest(path, { method = "GET", params = {}, body, signal } = {}) {
-  if (!API_URL) {
-    throw new ApiError("Falta configurar VITE_API_URL en el archivo .env.");
-  }
-
-  const url = new URL(`${API_URL}${path}`);
+  const normalizedPath = path.startsWith("/v1/") ? path.slice(3) : path;
+  const url = new URL(`${API_URL}${normalizedPath.startsWith("/") ? normalizedPath : `/${normalizedPath}`}`);
   Object.entries(params).forEach(([key, value]) => {
     if (value !== "" && value !== null && value !== undefined) url.searchParams.set(key, value);
   });
@@ -22,8 +24,12 @@ export async function apiRequest(path, { method = "GET", params = {}, body, sign
   try {
     response = await fetch(url, {
       method,
-      headers: { Accept: "application/json", ...(body ? { "Content-Type": "application/json" } : {}) },
-      body: body ? JSON.stringify(body) : undefined,
+      headers: {
+        Accept: "application/json",
+        ...(API_KEY ? { apikey: API_KEY } : {}),
+        ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
+      },
+      body: body !== undefined ? JSON.stringify(body) : undefined,
       signal,
     });
   } catch (error) {

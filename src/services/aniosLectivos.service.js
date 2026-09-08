@@ -1,12 +1,14 @@
 import { apiGet, apiPost, apiPut, extractList } from "./api";
 
-export async function getAniosLectivos({ signal } = {}) {
-  return extractList(await apiGet("/v1/anios-lectivos", { signal }));
+export async function getAniosLectivos({ estado, signal } = {}) {
+  return extractList(await apiGet("/anios-lectivos", { params: { estado }, signal }));
 }
+
+export function getAnioLectivo(id, { signal } = {}) { return apiGet(`/anios-lectivos/${id}`, { signal }); }
 
 export function createAnioLectivo(anio, nombre) {
   const numericYear = Number(anio);
-  return apiPost("/v1/anios-lectivos", {
+  return apiPost("/anios-lectivos", {
     anio: numericYear,
     nombre: nombre.trim(),
   });
@@ -14,8 +16,8 @@ export function createAnioLectivo(anio, nombre) {
 
 export function updateAnioLectivo(idAnioLectivo, anio, nombre) {
   const numericYear = Number(anio);
-  return apiPut(`/v1/anios-lectivos/${idAnioLectivo}`, {
+  void nombre;
+  return apiPut(`/anios-lectivos/${idAnioLectivo}`, {
     anio: numericYear,
-    nombre: nombre.trim(),
   });
 }

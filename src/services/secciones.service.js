@@ -1,14 +1,15 @@
 import { apiGet, apiPost, apiPut, extractList } from "./api";
 
-export async function getSecciones(idGrado, { signal } = {}) {
+export async function getSecciones(idGrado, { estado, signal } = {}) {
   if (!idGrado) return [];
-  return extractList(await apiGet("/v1/secciones", { params: { id_grado: idGrado }, signal }));
+  return extractList(await apiGet("/secciones", { params: { id_grado: idGrado, estado }, signal }));
 }
+export function getSeccion(id, { signal } = {}) { return apiGet(`/secciones/${id}`, { signal }); }
 
 export function createSeccion(idGrado, nombre) {
-  return apiPost("/v1/secciones", { id_grado: Number(idGrado), nombre: nombre.trim() });
+  return apiPost("/secciones", { id_grado: Number(idGrado), nombre: nombre.trim() });
 }
 
 export function updateSeccion(idSeccion, idGrado, nombre, estado = true) {
-  return apiPut(`/v1/secciones/${idSeccion}`, { id_grado: Number(idGrado), nombre: nombre.trim(), estado: Boolean(estado) });
+  return apiPut(`/secciones/${idSeccion}`, { id_grado: Number(idGrado), nombre: nombre.trim(), estado: Boolean(estado) });
 }

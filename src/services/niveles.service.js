@@ -1,14 +1,16 @@
 import { apiGet, apiPost, apiPut, extractList } from "./api";
 
-export async function getNiveles(idAnioLectivo, { signal } = {}) {
+export async function getNiveles(idAnioLectivo, { estado, signal } = {}) {
   if (!idAnioLectivo) return [];
-  return extractList(await apiGet("/v1/niveles", { params: { id_anio_lectivo: idAnioLectivo }, signal }));
+  return extractList(await apiGet("/niveles", { params: { id_anio_lectivo: idAnioLectivo, estado }, signal }));
 }
 
 export function createNivel(idAnioLectivo, nombre) {
-  return apiPost("/v1/niveles", { id_anio_lectivo: Number(idAnioLectivo), nombre: nombre.trim() });
+  return apiPost("/niveles", { id_anio_lectivo: Number(idAnioLectivo), nombre: nombre.trim() });
 }
 
 export function updateNivel(idNivel, idAnioLectivo, nombre) {
-  return apiPut(`/v1/niveles/${idNivel}`, { id_anio_lectivo: Number(idAnioLectivo), nombre: nombre.trim() });
+  return apiPut(`/niveles/${idNivel}`, { id_anio_lectivo: Number(idAnioLectivo), nombre: nombre.trim() });
 }
+
+export function getNivel(id, { signal } = {}) { return apiGet(`/niveles/${id}`, { signal }); }
