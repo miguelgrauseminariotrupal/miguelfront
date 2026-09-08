@@ -3,9 +3,9 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
-const titles = { "/inicio": "Inicio", "/agente-miguel": "Agente Miguel", "/asistencia": "Asistencia", "/evaluaciones": "Evaluaciones", "/parametros": "Parámetros" };
+const titles = { "/inicio": "Inicio", "/agente-miguel": "Agente Miguel", "/asistencia": "Asistencia", "/evaluaciones": "Evaluaciones", "/configuracion": "Configuración", "/docentes": "Docentes", "/alumnos": "Alumnos", "/matricula": "Matrícula", "/cursos": "Cursos", "/programacion": "Registro Clase" };
 
-export default function Header({ onOpenMenu }) {
+export default function Header({ onOpenMenu, sidebarCollapsed }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
   const location = useLocation();
@@ -23,7 +23,7 @@ export default function Header({ onOpenMenu }) {
   return (
     <header className="app-header">
       <div className="app-header__title">
-        <button className="menu-button" type="button" aria-label="Abrir menú" onClick={onOpenMenu}><Menu size={22} /></button>
+        <button className="menu-button" type="button" aria-label={sidebarCollapsed ? "Expandir menú" : "Ocultar menú"} aria-pressed={sidebarCollapsed} onClick={onOpenMenu}><Menu size={22} /></button>
         <h1>{titles[location.pathname] ?? "Miguel"}</h1>
       </div>
       <div className="user-menu" ref={menuRef}>

@@ -14,11 +14,11 @@ const menuItems = [
   { label: "Registro Clase", path: "/programacion", icon: Users },
 ];
 
-export default function Sidebar({ open, onClose }) {
+export default function Sidebar({ open, collapsed, onClose }) {
   return (
     <>
       <button className={`sidebar-backdrop ${open ? "is-visible" : ""}`} type="button" aria-label="Cerrar navegación" onClick={onClose} />
-      <aside className={`sidebar ${open ? "is-open" : ""}`} aria-label="Navegación principal">
+      <aside className={`sidebar ${open ? "is-open" : ""} ${collapsed ? "is-collapsed" : ""}`} aria-label="Navegación principal">
         <div className="sidebar__brand">
           <img src="/logo.png" alt="I.E. Almirante Miguel Grau Seminario" />
           <div><strong>MIGUEL</strong><span>Gestión académica</span></div>
@@ -26,7 +26,7 @@ export default function Sidebar({ open, onClose }) {
         </div>
         <nav className="sidebar__nav">
           {menuItems.map(({ label, path, icon: Icon, featured }) => (
-            <NavLink key={path} to={path} onClick={onClose} className={({ isActive }) => `nav-item ${featured ? "nav-item--featured" : ""} ${isActive ? "is-active" : ""}`}>
+            <NavLink key={path} to={path} onClick={onClose} title={collapsed ? label : undefined} aria-label={collapsed ? label : undefined} className={({ isActive }) => `nav-item ${featured ? "nav-item--featured" : ""} ${isActive ? "is-active" : ""}`}>
               <Icon size={19} strokeWidth={1.8} />
               <span>{label}</span>
               {featured && <i aria-hidden="true" />}
