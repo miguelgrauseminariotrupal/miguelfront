@@ -11,6 +11,7 @@ import DocentesPage from "../pages/DocentesPage";
 import AlumnosPage from "../pages/AlumnosPage";
 import ProgramacionPage from "../pages/ProgramacionPage";
 import CursosPage from "../pages/CursosPage";
+import MatriculaPage from "../pages/MatriculaPage";
 
 function PrivateRoute() {
   const { isAuthenticated } = useAuth();
@@ -36,6 +37,7 @@ export default function AppRoutes() {
         <Route path="/alumnos" element={<AlumnosPage />} />
         <Route path="/cursos" element={<CursosPage />} />
         <Route path="/programacion" element={<ProgramacionPage />} />
+        <Route path="/matricula" element={<MatriculaPage />} />
         <Route path="/parametros" element={<Navigate to="/configuracion" replace />} />
       </Route>
       <Route path="*" element={<Navigate to="/inicio" replace />} />

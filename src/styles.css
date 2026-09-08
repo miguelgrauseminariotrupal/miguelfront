@@ -289,6 +289,28 @@ button, input { font: inherit; }
 .attendance-save { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; margin: 22px 0 0 auto; padding: 0 16px; border: 0; border-radius: 9px; background: var(--color-primary); color: var(--color-white); font-size: .75rem; font-weight: 650; }
 .attendance-save:disabled { opacity: .45; cursor: not-allowed; }
 .attendance-demo-caption { margin: 7px 0 0; color: var(--color-text-secondary); font-size: .63rem; text-align: right; }
+.enrollment-page > .page-heading, .enrollment-page > .academic-filters, .enrollment-page > .enrollment-workspace { width: min(100%, 1080px); margin-right: auto; margin-left: auto; }
+.enrollment-workspace { margin-top: 22px; padding: 22px; border: 1px solid var(--color-border); border-radius: 14px; background: var(--color-white); }
+.enrollment-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.enrollment-heading > div { display: flex; align-items: center; gap: 8px; color: var(--color-primary-dark); }
+.enrollment-heading h3, .enrollment-card h4 { margin: 0; }
+.enrollment-heading > span { padding: 5px 9px; border-radius: 999px; background: var(--color-secondary-soft); color: var(--color-primary-dark); font-size: .72rem; font-weight: 700; }
+.enrollment-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.enrollment-card { min-width: 0; padding: 18px; border: 1px solid var(--color-border); border-radius: 12px; background: #fbfcfe; }
+.enrollment-card h4 { margin-bottom: 14px; color: var(--color-primary-dark); font-size: .86rem; }
+.enrollment-search { display: flex; align-items: center; gap: 8px; min-height: 42px; margin-bottom: 12px; padding: 0 12px; border: 1px solid var(--color-border); border-radius: 9px; background: var(--color-white); color: var(--color-text-secondary); }
+.enrollment-search:focus-within { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(7, 84, 155, .08); }
+.enrollment-search input { width: 100%; border: 0; outline: 0; background: transparent; font-size: .76rem; }
+.enrollment-list { display: grid; gap: 8px; max-height: 440px; overflow-y: auto; }
+.enrollment-list article { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 58px; padding: 10px 11px; border: 1px solid var(--color-border); border-radius: 9px; background: var(--color-white); }
+.enrollment-list article > div { min-width: 0; }
+.enrollment-list strong, .enrollment-list small { display: block; }
+.enrollment-list strong { overflow: hidden; color: var(--color-text); font-size: .76rem; text-overflow: ellipsis; white-space: nowrap; }
+.enrollment-list small { margin-top: 3px; color: var(--color-text-secondary); font-size: .66rem; }
+.enrollment-list button { display: flex; flex: 0 0 auto; align-items: center; gap: 5px; min-height: 34px; padding: 0 10px; border-radius: 8px; font-size: .69rem; font-weight: 700; cursor: pointer; }
+.enrollment-list button:disabled { opacity: .5; cursor: wait; }
+.enrollment-add { border: 0; background: var(--color-primary); color: var(--color-white); }
+.enrollment-remove { border: 1px solid #fecaca; background: #fff1f2; color: #b91c1c; }
 .attendance-empty { padding: 34px 18px; border-radius: 10px; background: var(--color-secondary-soft); text-align: center; }
 .attendance-empty p { margin: 14px 0 0; color: var(--color-text-secondary); font-size: .74rem; }
 .attendance-example-actions { display: flex; justify-content: center; gap: 10px; }
@@ -307,6 +329,7 @@ button, input { font: inherit; }
 @media (max-width: 980px) {
   .attendance-type__label { display: none; }
   .student-status .attendance-type { justify-content: center; min-width: 38px; padding-inline: 8px; }
+  .enrollment-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 980px) and (min-width: 761px) {
@@ -333,6 +356,9 @@ button, input { font: inherit; }
   .academic-filters { grid-template-columns: 1fr; gap: 13px; margin-top: 26px; padding: 18px; }
   .attendance-page { padding: 24px 14px 18px; }
   .attendance-page .academic-filters { margin-top: 20px; }
+  .enrollment-page .academic-filters { margin-top: 20px; }
+  .enrollment-workspace { margin-top: 14px; padding: 14px; }
+  .enrollment-card { padding: 14px; }
   .attendance-locked { margin-top: 14px; padding: 42px 20px; }
   .attendance-workspace { margin-top: 14px; padding: 16px; }
   .attendance-toolbar { align-items: stretch; flex-direction: column; gap: 14px; }
