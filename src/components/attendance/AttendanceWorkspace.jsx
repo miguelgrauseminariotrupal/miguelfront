@@ -63,7 +63,7 @@ export default function AttendanceWorkspace({ selection }) {
           <div className="student-identity"><span className="student-avatar">{initials(student) || "E"}</span><div><strong>{name}</strong><small>{student.dni ? `DNI ${student.dni}` : `Matrícula #${student.enrollment?.id_matricula}`}</small></div></div>
           <div className="student-status" aria-label={`Asistencia de ${name}`}>{attendanceTypes.map((type) => {
             const selected = String(attendance[studentId]) === String(type.id_tipo_asistencia);
-            return <button type="button" key={type.id_tipo_asistencia} className={`attendance-type attendance-type--${typeTone(type.codigo)}${selected ? " is-selected" : ""}`} aria-pressed={selected} title={type.descripcion} onClick={() => setStudentStatus(studentId, type.id_tipo_asistencia)}><span className="attendance-type__code">{type.codigo}</span><span>{type.descripcion}</span></button>;
+            return <button type="button" key={type.id_tipo_asistencia} className={`attendance-type attendance-type--${typeTone(type.codigo)}${selected ? " is-selected" : ""}`} aria-label={type.descripcion} aria-pressed={selected} title={type.descripcion} onClick={() => setStudentStatus(studentId, type.id_tipo_asistencia)}><span className="attendance-type__code">{type.codigo}</span><span className="attendance-type__label">{type.descripcion}</span></button>;
           })}</div>
         </article>;
       })}
