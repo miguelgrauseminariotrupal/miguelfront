@@ -1,5 +1,6 @@
 import { Bot, BookOpen, CalendarCheck, ClipboardCheck, GraduationCap, Home, Presentation, Settings2, UserPlus, Users, X } from "lucide-react";
 import { NavLink } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 const menuItems = [
   { label: "Inicio", path: "/inicio", icon: Home },
@@ -15,6 +16,8 @@ const menuItems = [
 ];
 
 export default function Sidebar({ open, collapsed, onClose }) {
+  const { role } = useAuth();
+  const visibleItems = role === "asistencia" ? menuItems.filter(({ path }) => path === "/asistencia") : menuItems;
   return (
     <>
       <button className={`sidebar-backdrop ${open ? "is-visible" : ""}`} type="button" aria-label="Cerrar navegación" onClick={onClose} />
@@ -25,7 +28,7 @@ export default function Sidebar({ open, collapsed, onClose }) {
           <button className="sidebar__close" type="button" aria-label="Cerrar menú" onClick={onClose}><X size={20} /></button>
         </div>
         <nav className="sidebar__nav">
-          {menuItems.map(({ label, path, icon: Icon, featured }) => (
+          {visibleItems.map(({ label, path, icon: Icon, featured }) => (
             <NavLink key={path} to={path} onClick={onClose} title={collapsed ? label : undefined} aria-label={collapsed ? label : undefined} className={({ isActive }) => `nav-item ${featured ? "nav-item--featured" : ""} ${isActive ? "is-active" : ""}`}>
               <Icon size={19} strokeWidth={1.8} />
               <span>{label}</span>

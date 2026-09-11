@@ -265,6 +265,9 @@ button, input { font: inherit; }
 .attendance-date { display: grid; gap: 5px; text-transform: capitalize; }
 .attendance-date span { color: var(--color-text-secondary); font-size: .68rem; font-weight: 600; text-transform: uppercase; }
 .attendance-date strong { color: var(--color-text); font-size: .86rem; }
+.attendance-date-picker { display: grid; gap: 5px; color: var(--color-text-secondary); font-size: .68rem; font-weight: 600; text-transform: uppercase; }
+.attendance-date-picker input { min-height: 40px; padding: 0 11px; border: 1px solid var(--color-border); border-radius: 9px; background: var(--color-white); color: var(--color-text); font: inherit; font-size: .78rem; cursor: pointer; }
+.attendance-date-picker input:focus { border-color: var(--color-primary); outline: 0; box-shadow: 0 0 0 3px rgba(7, 84, 155, .08); }
 .attendance-period { display: flex; padding: 3px; border: 1px solid var(--color-border); border-radius: 9px; }
 .attendance-period button { min-width: 64px; height: 34px; padding: 0 11px; border: 0; border-radius: 7px; background: transparent; color: var(--color-text-secondary); font-size: .73rem; font-weight: 600; cursor: pointer; }
 .attendance-period button.is-active { background: var(--color-primary); color: var(--color-white); }

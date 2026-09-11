@@ -18,9 +18,14 @@ function PrivateRoute() {
   return isAuthenticated ? <MainLayout /> : <Navigate to="/login" replace />;
 }
 
+function AdminRoute({ children }) {
+  const { role } = useAuth();
+  return role === "admin" ? children : <Navigate to="/asistencia" replace />;
+}
+
 function PublicRoute() {
-  const { isAuthenticated } = useAuth();
-  return isAuthenticated ? <Navigate to="/inicio" replace /> : <LoginPage />;
+  const { isAuthenticated, role } = useAuth();
+  return isAuthenticated ? <Navigate to={role === "asistencia" ? "/asistencia" : "/inicio"} replace /> : <LoginPage />;
 }
 
 export default function AppRoutes() {
@@ -28,17 +33,17 @@ export default function AppRoutes() {
     <Routes>
       <Route path="/login" element={<PublicRoute />} />
       <Route element={<PrivateRoute />}>
-        <Route path="/inicio" element={<InicioPage />} />
-        <Route path="/agente-miguel" element={<AgenteMiguelPage />} />
+        <Route path="/inicio" element={<AdminRoute><InicioPage /></AdminRoute>} />
+        <Route path="/agente-miguel" element={<AdminRoute><AgenteMiguelPage /></AdminRoute>} />
         <Route path="/asistencia" element={<AsistenciaPage />} />
-        <Route path="/evaluaciones" element={<EvaluacionesPage />} />
-        <Route path="/configuracion" element={<ParametrosPage />} />
-        <Route path="/docentes" element={<DocentesPage />} />
-        <Route path="/alumnos" element={<AlumnosPage />} />
-        <Route path="/cursos" element={<CursosPage />} />
-        <Route path="/programacion" element={<ProgramacionPage />} />
-        <Route path="/matricula" element={<MatriculaPage />} />
-        <Route path="/parametros" element={<Navigate to="/configuracion" replace />} />
+        <Route path="/evaluaciones" element={<AdminRoute><EvaluacionesPage /></AdminRoute>} />
+        <Route path="/configuracion" element={<AdminRoute><ParametrosPage /></AdminRoute>} />
+        <Route path="/docentes" element={<AdminRoute><DocentesPage /></AdminRoute>} />
+        <Route path="/alumnos" element={<AdminRoute><AlumnosPage /></AdminRoute>} />
+        <Route path="/cursos" element={<AdminRoute><CursosPage /></AdminRoute>} />
+        <Route path="/programacion" element={<AdminRoute><ProgramacionPage /></AdminRoute>} />
+        <Route path="/matricula" element={<AdminRoute><MatriculaPage /></AdminRoute>} />
+        <Route path="/parametros" element={<AdminRoute><Navigate to="/configuracion" replace /></AdminRoute>} />
       </Route>
       <Route path="*" element={<Navigate to="/inicio" replace />} />
     </Routes>

@@ -4,6 +4,7 @@ import { createAnioLectivo, getAniosLectivos, updateAnioLectivo } from "../servi
 import { createNivel, getNiveles, updateNivel } from "../services/niveles.service";
 import { createGrado, getGrados, updateGrado } from "../services/grados.service";
 import { SeccionesCrud } from "../components/configuration/ConfigurationCruds";
+import { currentAcademicYearId } from "../utils/academicYear";
 
 const tabs = [
   { id: "anios", label: "Año lectivo" },
@@ -62,7 +63,16 @@ export default function ParametrosPage() {
 
   const loadAnios = async () => {
     setLoading((state) => ({ ...state, anios: true }));
-    try { setAnios(await getAniosLectivos()); }
+    try {
+      const result = await getAniosLectivos();
+      setAnios(result);
+      const currentId = currentAcademicYearId(result);
+      if (currentId) {
+        setNivelForm((state) => state.idAnio ? state : { ...state, idAnio: currentId });
+        setGradoForm((state) => state.idAnio ? state : { ...state, idAnio: currentId });
+        await Promise.all([loadNiveles(currentId), loadNiveles(currentId, "grados")]);
+      }
+    }
     catch (error) { setFeedback({ error: error.message, success: "" }); }
     finally { setLoading((state) => ({ ...state, anios: false })); }
   };

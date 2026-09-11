@@ -5,15 +5,17 @@ import { createAsistencia, getAsistencias, updateAsistencia } from "../../servic
 import { getMatriculas } from "../../services/matriculas.service";
 import { getTiposAsistencia } from "../../services/tiposAsistencia.service";
 
-const periods = [{ id: "dia", label: "Día" }, { id: "semana", label: "Semana" }, { id: "mes", label: "Mes" }];
 const formatDate = (date) => new Intl.DateTimeFormat("es-PE", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(date);
 const fullName = (student) => [student.nombres, student.apellido_paterno, student.apellido_materno].filter(Boolean).join(" ");
 const initials = (student) => [student.nombres, student.apellido_paterno].filter(Boolean).map((part) => part.trim().charAt(0)).join("").toUpperCase();
 const typeTone = (code) => ({ A: "present", J: "justified", F: "absent", T: "late" }[code?.toUpperCase()] || "default");
 const dateValue = (date) => [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"), String(date.getDate()).padStart(2, "0")].join("-");
+const dateFromValue = (value) => {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day);
+};
 
 export default function AttendanceWorkspace({ selection }) {
-  const [period, setPeriod] = useState("dia");
   const [students, setStudents] = useState([]);
   const [attendanceTypes, setAttendanceTypes] = useState([]);
   const [attendance, setAttendance] = useState({});
@@ -24,6 +26,7 @@ export default function AttendanceWorkspace({ selection }) {
   const [feedback, setFeedback] = useState("");
   const today = useMemo(() => new Date(), []);
   const todayDate = useMemo(() => dateValue(today), [today]);
+  const [selectedDate, setSelectedDate] = useState(todayDate);
   const sectionId = selection?.seccion;
   const filtersComplete = Boolean(selection?.anio && selection?.nivel && selection?.grado && sectionId);
 
@@ -45,7 +48,7 @@ export default function AttendanceWorkspace({ selection }) {
         const uniqueStudentIds = [...new Set(enrollments.map((item) => item.id_estudiante).filter(Boolean))];
         const [studentRecords, dailyAttendance] = await Promise.all([
           Promise.all(uniqueStudentIds.map((id) => getAlumno(id, { signal: controller.signal }))),
-          getAsistencias({ fecha: todayDate, signal: controller.signal }),
+          getAsistencias({ fecha: selectedDate, signal: controller.signal }),
         ]);
         const enrollmentByStudent = new Map(enrollments.map((item) => [String(item.id_estudiante), item]));
         setStudents(studentRecords.map((student) => ({ ...student, enrollment: enrollmentByStudent.get(String(student.id_estudiante)) })));
@@ -57,7 +60,13 @@ export default function AttendanceWorkspace({ selection }) {
       .catch((requestError) => { if (requestError.name !== "AbortError") setError(requestError.message || "No se pudieron cargar los estudiantes matriculados."); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [sectionId, todayDate]);
+  }, [sectionId, selectedDate]);
+
+  const moveDate = (days) => {
+    const nextDate = dateFromValue(selectedDate);
+    nextDate.setDate(nextDate.getDate() + days);
+    setSelectedDate(dateValue(nextDate));
+  };
 
   const setStudentStatus = (studentId, typeId) => setAttendance((current) => ({ ...current, [studentId]: typeId }));
 
@@ -76,7 +85,7 @@ export default function AttendanceWorkspace({ selection }) {
         const payload = {
           id_matricula: enrollmentId,
           id_tipo_asistencia: attendance[String(student.id_estudiante)],
-          fecha: todayDate,
+          fecha: selectedDate,
         };
         const existing = savedAttendance[String(enrollmentId)];
         return existing ? updateAsistencia(existing.id_asistencia, payload) : createAsistencia(payload);
@@ -92,8 +101,11 @@ export default function AttendanceWorkspace({ selection }) {
 
   return <section className="attendance-workspace">
     {!filtersComplete && <div className="demo-notice"><span>Selecciona una sección</span><p>Completa los filtros académicos para cargar los estudiantes matriculados.</p></div>}
-    <div className="attendance-toolbar"><div className="attendance-date"><span>Fecha</span><strong>{formatDate(today)}</strong></div><div className="attendance-period" aria-label="Periodo de asistencia">{periods.map((item) => <button key={item.id} type="button" className={period === item.id ? "is-active" : ""} onClick={() => setPeriod(item.id)}>{item.label}</button>)}</div></div>
-    <div className="attendance-navigation"><button type="button" aria-label="Periodo anterior"><ChevronLeft size={19} /></button><span>{period === "dia" ? "Hoy" : period === "semana" ? "Esta semana" : "Este mes"}</span><button type="button" aria-label="Periodo siguiente"><ChevronRight size={19} /></button></div>
+    <div className="attendance-toolbar">
+      <div className="attendance-date"><span>Asistencia del día</span><strong>{formatDate(dateFromValue(selectedDate))}</strong></div>
+      <label className="attendance-date-picker"><span>Seleccionar fecha</span><input type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value || todayDate)} /></label>
+    </div>
+    <div className="attendance-navigation"><button type="button" aria-label="Día anterior" onClick={() => moveDate(-1)}><ChevronLeft size={19} /></button><span>{selectedDate === todayDate ? "Hoy" : formatDate(dateFromValue(selectedDate))}</span><button type="button" aria-label="Día siguiente" onClick={() => moveDate(1)}><ChevronRight size={19} /></button></div>
     <div className="student-list-heading"><div><Users size={19} /><h3>Estudiantes matriculados</h3></div><span>{loading ? "Cargando..." : `${students.length} estudiantes`}</span></div>
     <div className="student-attendance-list">
       {loading && <p className="parameter-empty">Cargando matrículas y estudiantes...</p>}
@@ -112,6 +124,6 @@ export default function AttendanceWorkspace({ selection }) {
     </div>
     {feedback && <p className={`parameter-feedback ${feedback.includes("correctamente") ? "is-success" : "is-error"}`} role="status">{feedback}</p>}
     <button className="attendance-save" type="button" disabled={loading || saving || students.length === 0} onClick={saveAttendance}><CalendarDays size={17} />{saving ? "Guardando..." : "Guardar asistencia"}</button>
-    <p className="attendance-demo-caption">La asistencia se registra con la fecha de hoy: {todayDate}.</p>
+    <p className="attendance-demo-caption">Mostrando la asistencia correspondiente al {selectedDate}. Al cambiar la fecha se cargan sus registros guardados.</p>
   </section>;
 }

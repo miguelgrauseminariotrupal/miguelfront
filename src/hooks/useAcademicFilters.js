@@ -3,6 +3,7 @@ import { getAniosLectivos } from "../services/aniosLectivos.service";
 import { getNiveles } from "../services/niveles.service";
 import { getGrados } from "../services/grados.service";
 import { getSecciones } from "../services/secciones.service";
+import { currentAcademicYearId } from "../utils/academicYear";
 
 const emptySelection = { anio: "", nivel: "", grado: "", seccion: "" };
 const emptyLists = { anios: [], niveles: [], grados: [], secciones: [] };
@@ -19,7 +20,11 @@ export default function useAcademicFilters() {
     const controller = new AbortController();
     setLoading((state) => ({ ...state, anios: true }));
     getAniosLectivos({ signal: controller.signal })
-      .then((anios) => setLists((state) => ({ ...state, anios })))
+      .then(async (anios) => {
+        setLists((state) => ({ ...state, anios }));
+        const currentId = currentAcademicYearId(anios);
+        if (currentId) await selectAnio(currentId);
+      })
       .catch((error) => { if (error.name !== "AbortError") setErrors((state) => ({ ...state, anios: error.message })); })
       .finally(() => { if (!controller.signal.aborted) setLoading((state) => ({ ...state, anios: false })); });
     return () => controller.abort();

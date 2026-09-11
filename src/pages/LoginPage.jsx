@@ -23,8 +23,12 @@ export default function LoginPage() {
       document.getElementById(nextErrors.username ? "username" : "password")?.focus();
       return;
     }
-    login();
-    navigate("/inicio", { replace: true });
+    const role = login(values.username, values.password);
+    if (!role) {
+      setErrors({ username: "Usuario o contraseña incorrectos.", password: "Usuario o contraseña incorrectos." });
+      return;
+    }
+    navigate(role === "asistencia" ? "/asistencia" : "/inicio", { replace: true });
   };
 
   return (

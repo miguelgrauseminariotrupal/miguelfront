@@ -9,6 +9,7 @@ import { createDocente, getDocentes, updateDocente } from "../../services/docent
 import { createAlumno, getAlumnos, updateAlumno } from "../../services/alumnos.service";
 import { createProgramacionSeccion, getProgramacionSecciones, updateProgramacionSeccion } from "../../services/programacionSecciones.service";
 import { createProgramacionCurso, getProgramacionCursos, updateProgramacionCurso } from "../../services/programacionCursos.service";
+import { currentAcademicYearId } from "../../utils/academicYear";
 
 const text = (value) => value == null ? "" : String(value);
 const personName = (item) => [item.nombres, item.apellido_paterno, item.apellido_materno].filter(Boolean).join(" ");
@@ -91,7 +92,12 @@ function CrudPanel({ initial, createValues, canOperate = true, showActions = tru
 export function SeccionesCrud() {
   const [options, setOptions] = useState({ anios: [], niveles: [], grados: [] });
   const [selection, setSelection] = useState({ anio: "", nivel: "" });
-  useEffect(() => { getAniosLectivos().then((anios) => setOptions((s) => ({ ...s, anios }))).catch(() => {}); }, []);
+  useEffect(() => { getAniosLectivos().then(async (anios) => {
+    const anio = currentAcademicYearId(anios);
+    const niveles = anio ? await getNiveles(anio) : [];
+    setOptions((s) => ({ ...s, anios, niveles }));
+    setSelection({ anio, nivel: "" });
+  }).catch(() => {}); }, []);
   const initial = { id: "", idAnio: "", idNivel: "", id_grado: "", nombre: "", estado: "true" };
   const load = useCallback(() => Promise.resolve([]), []);
   const [selectedGrade, setSelectedGrade] = useState("");
@@ -120,7 +126,7 @@ export function SeccionesCrud() {
 
 export function CursosCrud() {
   const [anios, setAnios] = useState([]); const [filter, setFilter] = useState("");
-  useEffect(() => { getAniosLectivos().then(setAnios).catch(() => {}); }, []);
+  useEffect(() => { getAniosLectivos().then((result) => { setAnios(result); setFilter(currentAcademicYearId(result)); }).catch(() => {}); }, []);
   const initial = { id: "", id_anio_lectivo: "", nombre: "", estado: "true" };
   return <CrudPanel initial={initial} load={useCallback(() => getCursos(filter), [filter])} idOf={(x) => x.id_curso} labelOf={(x) => `${x.nombre}${x.estado === false ? " · Inactivo" : ""}`} noun="Curso"
     canOperate={Boolean(filter)} createValues={() => ({ ...initial, id_anio_lectivo: filter })}
@@ -142,7 +148,12 @@ export function AlumnosCrud() { return <CrudPanel initial={personInitial} load={
 export function ProgramacionSeccionesCrud({ onEdit }) {
   const [docentes, setDocentes] = useState([]);
   const [academic, setAcademic] = useState({ anios: [], niveles: [], grados: [], secciones: [], anio: "", nivel: "", grado: "" });
-  useEffect(() => { Promise.all([getDocentes(), getAniosLectivos()]).then(([docentesResult, anios]) => { setDocentes(docentesResult); setAcademic((state) => ({ ...state, anios })); }).catch(() => {}); }, []);
+  useEffect(() => { Promise.all([getDocentes(), getAniosLectivos()]).then(async ([docentesResult, anios]) => {
+    const anio = currentAcademicYearId(anios);
+    const niveles = anio ? await getNiveles(anio) : [];
+    setDocentes(docentesResult);
+    setAcademic((state) => ({ ...state, anios, anio, niveles }));
+  }).catch(() => {}); }, []);
   const changeAnio = async (event) => { const anio = event.target.value; const niveles = anio ? await getNiveles(anio) : []; setAcademic((state) => ({ ...state, anio, nivel: "", grado: "", niveles, grados: [], secciones: [] })); };
   const changeNivel = async (event) => { const nivel = event.target.value; const grados = nivel ? await getGrados(nivel) : []; setAcademic((state) => ({ ...state, nivel, grado: "", grados, secciones: [] })); };
   const changeGrado = async (event) => { const grado = event.target.value; const secciones = grado ? await getSecciones(grado) : []; setAcademic((state) => ({ ...state, grado, secciones })); };
