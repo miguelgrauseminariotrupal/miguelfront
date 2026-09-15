@@ -275,6 +275,9 @@ button, input { font: inherit; }
 .attendance-navigation button { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--color-primary); cursor: pointer; }
 .attendance-navigation button:hover { background: var(--color-secondary-soft); }
 .attendance-navigation span { color: var(--color-text); font-size: .78rem; font-weight: 600; }
+.attendance-responsible-teacher { margin: 18px 0 0; color: var(--color-text-secondary); font-size: .75rem; }
+.attendance-responsible-teacher span { font-weight: 600; }
+.attendance-responsible-teacher strong { color: var(--color-text); }
 .student-list-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 22px 0 12px; }
 .student-list-heading > div { display: flex; align-items: center; gap: 9px; color: var(--color-primary); }
 .student-list-heading h3 { margin: 0; color: var(--color-text); font-size: .88rem; }
