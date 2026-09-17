@@ -57,6 +57,22 @@ tags:
     description: Cursos programados dentro de una sección
   - name: Matriculas
     description: Matrícula de estudiantes en una sección
+  - name: TiposAsistencia
+    description: Catálogo de tipos de asistencia (mg_tipo_asistencia)
+  - name: Asistencias
+    description: Registro diario de asistencia por matrícula (mg_asistencia)
+  - name: MatriculaCursos
+    description: >
+      Asignación de un alumno matriculado a un curso programado
+      (mg_matricula_curso), incluyendo el batch de generación automática.
+  - name: ValoresEvaluacion
+    description: Catálogo de valores de evaluación, ej. A/B/C (mg_valor_evaluacion)
+  - name: Aprendizajes
+    description: Aprendizajes por año lectivo (mg_aprendizaje)
+  - name: Competencias
+    description: Competencias por curso, opcionalmente ligadas a un aprendizaje (mg_competencia)
+  - name: Capacidades
+    description: Capacidades de una competencia (mg_capacidades)
 
 components:
   securitySchemes:
@@ -387,24 +403,19 @@ components:
 
     Matricula:
       type: object
+      description: Relación directa con mg_seccion vía 'id_seccion'.
       properties:
         id_matricula: { type: integer, readOnly: true }
-        id_programacion_seccion: { type: integer, readOnly: true }
+        id_seccion: { type: integer }
         id_estudiante: { type: integer }
         fecha_matricula: { type: string, format: date }
         estado: { type: boolean, default: true }
-      required: [id_matricula, id_programacion_seccion, id_estudiante, fecha_matricula, estado]
+      required: [id_matricula, id_seccion, id_estudiante, fecha_matricula, estado]
 
     MatriculaCreate:
       type: object
-      description: >
-        Recibe 'id_seccion' (no 'id_programacion_seccion'): el servidor
-        resuelve internamente la programación de sección activa para esa
-        sección y guarda su id_programacion_seccion real.
       properties:
-        id_seccion:
-          type: integer
-          description: Debe tener una mg_programacion_seccion ya creada.
+        id_seccion: { type: integer }
         id_estudiante: { type: integer }
         fecha_matricula:
           type: string
@@ -416,11 +427,211 @@ components:
     MatriculaUpdate:
       type: object
       properties:
-        id_seccion:
-          type: integer
-          description: Igual que en creación, se resuelve a id_programacion_seccion.
+        id_seccion: { type: integer }
         id_estudiante: { type: integer }
         fecha_matricula: { type: string, format: date, nullable: true }
+        estado: { type: boolean }
+
+    TipoAsistencia:
+      type: object
+      properties:
+        id_tipo_asistencia: { type: integer, readOnly: true }
+        codigo: { type: string, example: "TARDANZA" }
+        descripcion: { type: string, example: "Tardanza justificada" }
+        estado: { type: boolean, default: true }
+      required: [id_tipo_asistencia, codigo, descripcion, estado]
+
+    TipoAsistenciaCreate:
+      type: object
+      properties:
+        codigo: { type: string, example: "TARDANZA" }
+        descripcion: { type: string, example: "Tardanza justificada" }
+        estado: { type: boolean, default: true }
+      required: [codigo, descripcion]
+
+    TipoAsistenciaUpdate:
+      type: object
+      properties:
+        codigo: { type: string }
+        descripcion: { type: string }
+        estado: { type: boolean }
+
+    Asistencia:
+      type: object
+      description: No tiene campo 'estado' (a diferencia del resto de tablas).
+      properties:
+        id_asistencia: { type: integer, readOnly: true }
+        id_matricula: { type: integer }
+        id_tipo_asistencia: { type: integer }
+        fecha: { type: string, format: date }
+      required: [id_asistencia, id_matricula, id_tipo_asistencia, fecha]
+
+    AsistenciaCreate:
+      type: object
+      properties:
+        id_matricula: { type: integer }
+        id_tipo_asistencia: { type: integer }
+        fecha: { type: string, format: date, example: "2026-04-10" }
+      required: [id_matricula, id_tipo_asistencia, fecha]
+
+    AsistenciaUpdate:
+      type: object
+      properties:
+        id_matricula: { type: integer }
+        id_tipo_asistencia: { type: integer }
+        fecha: { type: string, format: date }
+
+    MatriculaCurso:
+      type: object
+      properties:
+        id_matricula_curso: { type: integer, readOnly: true }
+        id_matricula: { type: integer }
+        id_programacion_curso: { type: integer }
+        estado: { type: boolean, default: true }
+      required: [id_matricula_curso, id_matricula, id_programacion_curso, estado]
+
+    MatriculaCursoCreate:
+      type: object
+      description: Alta manual de un solo registro (para el batch, ver /matricula-cursos/generar).
+      properties:
+        id_matricula: { type: integer }
+        id_programacion_curso: { type: integer }
+        estado: { type: boolean, default: true }
+      required: [id_matricula, id_programacion_curso]
+
+    MatriculaCursoUpdate:
+      type: object
+      properties:
+        id_matricula: { type: integer }
+        id_programacion_curso: { type: integer }
+        estado: { type: boolean }
+
+    GenerarMatriculaCursoRequest:
+      type: object
+      properties:
+        id_matricula:
+          type: integer
+          description: >
+            Si se omite, procesa todas las matrículas activas (estado=true)
+            del sistema; si se envía, procesa solo esa matrícula.
+
+    GenerarMatriculaCursoResponse:
+      type: object
+      properties:
+        matriculas_procesadas: { type: integer }
+        secciones_sin_programacion:
+          type: array
+          items: { type: integer }
+          description: >
+            id_seccion de matrículas procesadas cuya sección todavía no tiene
+            mg_programacion_seccion creada (no se generó nada para ellas).
+        registros_creados: { type: integer }
+        registros_ya_existian: { type: integer }
+      required: [matriculas_procesadas, secciones_sin_programacion, registros_creados, registros_ya_existian]
+
+    ValorEvaluacion:
+      type: object
+      properties:
+        id_valor: { type: integer, readOnly: true }
+        codigo: { type: string, example: "A" }
+        descripcion: { type: string, example: "Logro destacado" }
+        estado: { type: boolean, default: true }
+      required: [id_valor, codigo, descripcion, estado]
+
+    ValorEvaluacionCreate:
+      type: object
+      properties:
+        codigo: { type: string, example: "A" }
+        descripcion: { type: string, example: "Logro destacado" }
+        estado: { type: boolean, default: true }
+      required: [codigo, descripcion]
+
+    ValorEvaluacionUpdate:
+      type: object
+      properties:
+        codigo: { type: string }
+        descripcion: { type: string }
+        estado: { type: boolean }
+
+    Aprendizaje:
+      type: object
+      properties:
+        id_aprendizaje: { type: integer, readOnly: true }
+        nombre_aprendizaje: { type: string, nullable: true }
+        id_anio_lectivo: { type: integer, nullable: true }
+        estado: { type: boolean, nullable: true }
+      required: [id_aprendizaje]
+
+    AprendizajeCreate:
+      type: object
+      properties:
+        nombre_aprendizaje: { type: string }
+        id_anio_lectivo: { type: integer }
+        estado: { type: boolean, default: true }
+      required: [nombre_aprendizaje]
+
+    AprendizajeUpdate:
+      type: object
+      properties:
+        nombre_aprendizaje: { type: string }
+        id_anio_lectivo: { type: integer, nullable: true }
+        estado: { type: boolean }
+
+    Competencia:
+      type: object
+      properties:
+        id_competencia: { type: integer, readOnly: true }
+        id_curso: { type: integer }
+        codigo: { type: string, nullable: true }
+        descripcion: { type: string }
+        id_aprendizaje: { type: integer, nullable: true }
+        tipo: { type: string, nullable: true }
+        estado: { type: boolean, default: true }
+      required: [id_competencia, id_curso, descripcion, estado]
+
+    CompetenciaCreate:
+      type: object
+      properties:
+        id_curso: { type: integer }
+        descripcion: { type: string }
+        codigo: { type: string }
+        id_aprendizaje: { type: integer }
+        tipo: { type: string }
+        estado: { type: boolean, default: true }
+      required: [id_curso, descripcion]
+
+    CompetenciaUpdate:
+      type: object
+      properties:
+        id_curso: { type: integer }
+        descripcion: { type: string }
+        codigo: { type: string, nullable: true }
+        id_aprendizaje: { type: integer, nullable: true }
+        tipo: { type: string, nullable: true }
+        estado: { type: boolean }
+
+    Capacidad:
+      type: object
+      properties:
+        id_capacidad: { type: integer, readOnly: true }
+        descripcion: { type: string }
+        id_competencia: { type: integer, nullable: true }
+        estado: { type: boolean, default: true }
+      required: [id_capacidad, descripcion, estado]
+
+    CapacidadCreate:
+      type: object
+      properties:
+        descripcion: { type: string }
+        id_competencia: { type: integer }
+        estado: { type: boolean, default: true }
+      required: [descripcion]
+
+    CapacidadUpdate:
+      type: object
+      properties:
+        descripcion: { type: string }
+        id_competencia: { type: integer, nullable: true }
         estado: { type: boolean }
 
   parameters:
@@ -1178,14 +1389,12 @@ paths:
       tags: [Matriculas]
       summary: Listar matrículas
       description: >
-        Los filtros id_anio_lectivo/id_nivel/id_grado/id_seccion suben la
-        cadena mg_programacion_seccion -> mg_seccion -> mg_grado -> mg_nivel;
-        'q' busca por nombre/apellidos/dni del alumno matriculado. Todos se
-        pueden combinar entre sí y con id_programacion_seccion/id_estudiante/estado.
+        'id_seccion' filtra directo (columna propia de mg_matricula).
+        id_anio_lectivo/id_nivel/id_grado filtran subiendo la cadena
+        mg_seccion -> mg_grado -> mg_nivel; 'q' busca por nombre/apellidos/dni
+        del alumno matriculado. Todos se pueden combinar entre sí y con
+        id_estudiante/estado.
       parameters:
-        - name: id_programacion_seccion
-          in: query
-          schema: { type: integer }
         - name: id_estudiante
           in: query
           schema: { type: integer }
@@ -1220,8 +1429,7 @@ paths:
       tags: [Matriculas]
       summary: Matricular a un estudiante en una sección
       description: >
-        Campos obligatorios: `id_seccion` (debe tener ya una
-        mg_programacion_seccion creada), `id_estudiante`. Opcionales:
+        Campos obligatorios: `id_seccion`, `id_estudiante`. Opcionales:
         `fecha_matricula` (default fecha actual), `estado` (default true).
       requestBody:
         required: true
@@ -1234,13 +1442,7 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Matricula' }
-        '400':
-          description: >
-            Validación de campos, o 'id_seccion' sin una programación de
-            sección activa.
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
         '409': { $ref: '#/components/responses/Conflict' }
 
   /matriculas/{id}:
@@ -1272,12 +1474,553 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Matricula' }
-        '400':
-          description: >
-            Validación de campos, o 'id_seccion' sin una programación de
-            sección activa.
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /tipos-asistencia:
+    get:
+      tags: [TiposAsistencia]
+      summary: Listar tipos de asistencia
+      parameters:
+        - $ref: '#/components/parameters/EstadoFilter'
+        - name: q
+          in: query
+          description: Búsqueda parcial (ILIKE) en codigo/descripcion.
+          schema: { type: string }
+      responses:
+        '200':
+          description: Lista de tipos de asistencia
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/TipoAsistencia' }
+        '500': { $ref: '#/components/responses/ServerError' }
+    post:
+      tags: [TiposAsistencia]
+      summary: Crear tipo de asistencia
+      description: "Campos obligatorios: `codigo`, `descripcion`. Opcional: `estado` (default true)."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TipoAsistenciaCreate' }
+      responses:
+        '201':
+          description: Tipo de asistencia creado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TipoAsistencia' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /tipos-asistencia/{id}:
+    get:
+      tags: [TiposAsistencia]
+      summary: Obtener tipo de asistencia por id
+      parameters: [{ $ref: '#/components/parameters/IdPath' }]
+      responses:
+        '200':
+          description: Tipo de asistencia
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TipoAsistencia' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [TiposAsistencia]
+      summary: Actualizar tipo de asistencia
+      description: "Todos los campos son opcionales, pero debe enviarse al menos uno."
+      parameters: [{ $ref: '#/components/parameters/IdPath' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TipoAsistenciaUpdate' }
+      responses:
+        '200':
+          description: Tipo de asistencia actualizado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TipoAsistencia' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /asistencias:
+    get:
+      tags: [Asistencias]
+      summary: Listar asistencias
+      parameters:
+        - name: id_matricula
+          in: query
+          schema: { type: integer }
+        - name: id_tipo_asistencia
+          in: query
+          schema: { type: integer }
+        - name: fecha
+          in: query
+          description: Filtra por una fecha exacta (YYYY-MM-DD).
+          schema: { type: string, format: date }
+        - name: fecha_desde
+          in: query
+          schema: { type: string, format: date }
+        - name: fecha_hasta
+          in: query
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: Lista de asistencias
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Asistencia' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '500': { $ref: '#/components/responses/ServerError' }
+    post:
+      tags: [Asistencias]
+      summary: Registrar asistencia
+      description: >
+        Campos obligatorios: `id_matricula`, `id_tipo_asistencia`, `fecha`.
+        Se rechaza con 409 si ya existe un registro para esa matrícula en esa
+        fecha (chequeo a nivel de aplicación; no hay UNIQUE en la base).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AsistenciaCreate' }
+      responses:
+        '201':
+          description: Asistencia registrada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Asistencia' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /asistencias/{id}:
+    get:
+      tags: [Asistencias]
+      summary: Obtener asistencia por id
+      parameters: [{ $ref: '#/components/parameters/IdPath' }]
+      responses:
+        '200':
+          description: Asistencia
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Asistencia' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Asistencias]
+      summary: Corregir un registro de asistencia
+      description: "Todos los campos son opcionales, pero debe enviarse al menos uno."
+      parameters: [{ $ref: '#/components/parameters/IdPath' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AsistenciaUpdate' }
+      responses:
+        '200':
+          description: Asistencia actualizada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Asistencia' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /matricula-cursos:
+    get:
+      tags: [MatriculaCursos]
+      summary: Listar matrículas de curso
+      parameters:
+        - name: id_matricula
+          in: query
+          schema: { type: integer }
+        - name: id_programacion_curso
+          in: query
+          schema: { type: integer }
+        - $ref: '#/components/parameters/EstadoFilter'
+      responses:
+        '200':
+          description: Lista de matrículas de curso
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/MatriculaCurso' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '500': { $ref: '#/components/responses/ServerError' }
+    post:
+      tags: [MatriculaCursos]
+      summary: Crear una matrícula de curso manualmente
+      description: "Campos obligatorios: `id_matricula`, `id_programacion_curso`. Opcional: `estado` (default true). Para generación masiva ver /matricula-cursos/generar."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MatriculaCursoCreate' }
+      responses:
+        '201':
+          description: Matrícula de curso creada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MatriculaCurso' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /matricula-cursos/generar:
+    post:
+      tags: [MatriculaCursos]
+      summary: Generar en batch las matrículas de curso
+      description: >
+        Por cada matrícula a procesar (una sola si se manda `id_matricula`,
+        o todas las activas si se omite), resuelve la mg_programacion_seccion
+        de su sección, toma los mg_programacion_curso activos de esa
+        sección, y crea el mg_matricula_curso que falte para cada
+        combinación (matrícula, curso programado). No duplica pares ya
+        existentes.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GenerarMatriculaCursoRequest' }
+      responses:
+        '201':
+          description: Resultado del batch (puede crear 0 registros si ya estaba todo generado)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GenerarMatriculaCursoResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /matricula-cursos/{id}:
+    get:
+      tags: [MatriculaCursos]
+      summary: Obtener matrícula de curso por id
+      parameters: [{ $ref: '#/components/parameters/IdPath' }]
+      responses:
+        '200':
+          description: Matrícula de curso
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MatriculaCurso' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [MatriculaCursos]
+      summary: Actualizar matrícula de curso
+      description: "Todos los campos son opcionales, pero debe enviarse al menos uno."
+      parameters: [{ $ref: '#/components/parameters/IdPath' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MatriculaCursoUpdate' }
+      responses:
+        '200':
+          description: Matrícula de curso actualizada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MatriculaCurso' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /valores-evaluacion:
+    get:
+      tags: [ValoresEvaluacion]
+      summary: Listar valores de evaluación
+      parameters:
+        - $ref: '#/components/parameters/EstadoFilter'
+        - name: q
+          in: query
+          description: Búsqueda parcial (ILIKE) en codigo/descripcion.
+          schema: { type: string }
+      responses:
+        '200':
+          description: Lista de valores de evaluación
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ValorEvaluacion' }
+        '500': { $ref: '#/components/responses/ServerError' }
+    post:
+      tags: [ValoresEvaluacion]
+      summary: Crear valor de evaluación
+      description: "Campos obligatorios: `codigo`, `descripcion`. Opcional: `estado` (default true)."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ValorEvaluacionCreate' }
+      responses:
+        '201':
+          description: Valor de evaluación creado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ValorEvaluacion' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /valores-evaluacion/{id}:
+    get:
+      tags: [ValoresEvaluacion]
+      summary: Obtener valor de evaluación por id
+      parameters: [{ $ref: '#/components/parameters/IdPath' }]
+      responses:
+        '200':
+          description: Valor de evaluación
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ValorEvaluacion' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [ValoresEvaluacion]
+      summary: Actualizar valor de evaluación
+      description: "Todos los campos son opcionales, pero debe enviarse al menos uno."
+      parameters: [{ $ref: '#/components/parameters/IdPath' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ValorEvaluacionUpdate' }
+      responses:
+        '200':
+          description: Valor de evaluación actualizado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ValorEvaluacion' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /aprendizajes:
+    get:
+      tags: [Aprendizajes]
+      summary: Listar aprendizajes
+      parameters:
+        - name: id_anio_lectivo
+          in: query
+          schema: { type: integer }
+        - $ref: '#/components/parameters/EstadoFilter'
+        - name: q
+          in: query
+          description: Búsqueda parcial (ILIKE) en nombre_aprendizaje.
+          schema: { type: string }
+      responses:
+        '200':
+          description: Lista de aprendizajes
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Aprendizaje' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '500': { $ref: '#/components/responses/ServerError' }
+    post:
+      tags: [Aprendizajes]
+      summary: Crear aprendizaje
+      description: "Campo obligatorio: `nombre_aprendizaje`. Opcionales: `id_anio_lectivo`, `estado`."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AprendizajeCreate' }
+      responses:
+        '201':
+          description: Aprendizaje creado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Aprendizaje' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /aprendizajes/{id}:
+    get:
+      tags: [Aprendizajes]
+      summary: Obtener aprendizaje por id
+      parameters: [{ $ref: '#/components/parameters/IdPath' }]
+      responses:
+        '200':
+          description: Aprendizaje
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Aprendizaje' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Aprendizajes]
+      summary: Actualizar aprendizaje
+      description: "Todos los campos son opcionales, pero debe enviarse al menos uno."
+      parameters: [{ $ref: '#/components/parameters/IdPath' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AprendizajeUpdate' }
+      responses:
+        '200':
+          description: Aprendizaje actualizado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Aprendizaje' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /competencias:
+    get:
+      tags: [Competencias]
+      summary: Listar competencias
+      parameters:
+        - name: id_curso
+          in: query
+          schema: { type: integer }
+        - name: id_aprendizaje
+          in: query
+          schema: { type: integer }
+        - $ref: '#/components/parameters/EstadoFilter'
+        - name: q
+          in: query
+          description: Búsqueda parcial (ILIKE) en codigo/descripcion.
+          schema: { type: string }
+      responses:
+        '200':
+          description: Lista de competencias
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Competencia' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '500': { $ref: '#/components/responses/ServerError' }
+    post:
+      tags: [Competencias]
+      summary: Crear competencia
+      description: "Campos obligatorios: `id_curso`, `descripcion`. Opcionales: `codigo`, `id_aprendizaje`, `tipo`, `estado`."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CompetenciaCreate' }
+      responses:
+        '201':
+          description: Competencia creada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Competencia' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /competencias/{id}:
+    get:
+      tags: [Competencias]
+      summary: Obtener competencia por id
+      parameters: [{ $ref: '#/components/parameters/IdPath' }]
+      responses:
+        '200':
+          description: Competencia
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Competencia' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Competencias]
+      summary: Actualizar competencia
+      description: "Todos los campos son opcionales, pero debe enviarse al menos uno."
+      parameters: [{ $ref: '#/components/parameters/IdPath' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CompetenciaUpdate' }
+      responses:
+        '200':
+          description: Competencia actualizada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Competencia' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /capacidades:
+    get:
+      tags: [Capacidades]
+      summary: Listar capacidades
+      parameters:
+        - name: id_competencia
+          in: query
+          schema: { type: integer }
+        - $ref: '#/components/parameters/EstadoFilter'
+        - name: q
+          in: query
+          description: Búsqueda parcial (ILIKE) en descripcion.
+          schema: { type: string }
+      responses:
+        '200':
+          description: Lista de capacidades
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Capacidad' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '500': { $ref: '#/components/responses/ServerError' }
+    post:
+      tags: [Capacidades]
+      summary: Crear capacidad
+      description: "Campo obligatorio: `descripcion`. Opcionales: `id_competencia`, `estado`."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CapacidadCreate' }
+      responses:
+        '201':
+          description: Capacidad creada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Capacidad' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /capacidades/{id}:
+    get:
+      tags: [Capacidades]
+      summary: Obtener capacidad por id
+      parameters: [{ $ref: '#/components/parameters/IdPath' }]
+      responses:
+        '200':
+          description: Capacidad
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Capacidad' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Capacidades]
+      summary: Actualizar capacidad
+      description: "Todos los campos son opcionales, pero debe enviarse al menos uno."
+      parameters: [{ $ref: '#/components/parameters/IdPath' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CapacidadUpdate' }
+      responses:
+        '200':
+          description: Capacidad actualizada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Capacidad' }
+        '400': { $ref: '#/components/responses/BadRequest' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }

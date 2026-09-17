@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
-const titles = { "/inicio": "Inicio", "/agente-miguel": "Agente Miguel", "/asistencia": "Asistencia", "/evaluaciones": "Evaluaciones", "/configuracion": "Configuración", "/docentes": "Docentes", "/alumnos": "Alumnos", "/matricula": "Matrícula", "/cursos": "Cursos", "/programacion": "Registro Clase" };
+const titles = { "/inicio": "Inicio", "/agente-miguel": "Agente Miguel", "/asistencia": "Asistencia", "/evaluaciones": "Evaluaciones", "/evaluaciones/calificaciones": "Calificaciones", "/evaluaciones/configuracion": "Configuración de evaluaciones", "/generar-matricula-curso": "Generar Matrícula - Curso", "/configuracion": "Configuración", "/docentes": "Docentes", "/alumnos": "Alumnos", "/matricula": "Matrícula", "/cursos": "Cursos", "/programacion": "Registro Clase" };
 
 export default function Header({ onOpenMenu, sidebarCollapsed }) {
   const [menuOpen, setMenuOpen] = useState(false);

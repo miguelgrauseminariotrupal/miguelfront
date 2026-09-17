@@ -6,6 +6,8 @@ import InicioPage from "../pages/InicioPage";
 import AgenteMiguelPage from "../pages/AgenteMiguelPage";
 import AsistenciaPage from "../pages/AsistenciaPage";
 import EvaluacionesPage from "../pages/EvaluacionesPage";
+import EvaluacionesConfiguracionPage from "../pages/EvaluacionesConfiguracionPage";
+import GenerarMatriculaCursoPage from "../pages/GenerarMatriculaCursoPage";
 import ParametrosPage from "../pages/ParametrosPage";
 import DocentesPage from "../pages/DocentesPage";
 import AlumnosPage from "../pages/AlumnosPage";
@@ -36,13 +38,16 @@ export default function AppRoutes() {
         <Route path="/inicio" element={<AdminRoute><InicioPage /></AdminRoute>} />
         <Route path="/agente-miguel" element={<AdminRoute><AgenteMiguelPage /></AdminRoute>} />
         <Route path="/asistencia" element={<AsistenciaPage />} />
-        <Route path="/evaluaciones" element={<AdminRoute><EvaluacionesPage /></AdminRoute>} />
+        <Route path="/evaluaciones" element={<AdminRoute><Navigate to="/evaluaciones/calificaciones" replace /></AdminRoute>} />
+        <Route path="/evaluaciones/calificaciones" element={<AdminRoute><EvaluacionesPage /></AdminRoute>} />
+        <Route path="/evaluaciones/configuracion" element={<AdminRoute><EvaluacionesConfiguracionPage /></AdminRoute>} />
         <Route path="/configuracion" element={<AdminRoute><ParametrosPage /></AdminRoute>} />
         <Route path="/docentes" element={<AdminRoute><DocentesPage /></AdminRoute>} />
         <Route path="/alumnos" element={<AdminRoute><AlumnosPage /></AdminRoute>} />
         <Route path="/cursos" element={<AdminRoute><CursosPage /></AdminRoute>} />
         <Route path="/programacion" element={<AdminRoute><ProgramacionPage /></AdminRoute>} />
         <Route path="/matricula" element={<AdminRoute><MatriculaPage /></AdminRoute>} />
+        <Route path="/generar-matricula-curso" element={<AdminRoute><GenerarMatriculaCursoPage /></AdminRoute>} />
         <Route path="/parametros" element={<AdminRoute><Navigate to="/configuracion" replace /></AdminRoute>} />
       </Route>
       <Route path="*" element={<Navigate to="/inicio" replace />} />
