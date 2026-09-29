@@ -82,8 +82,8 @@ function CrudPanel({ initial, createValues, canOperate = true, showActions = tru
     {resultsVisible && <div className="parameter-table-wrap configuration-list">
       {loading && <p className="parameter-empty">Cargando...</p>}
       {!loading && !filteredItems.length && <p className="parameter-empty">No se encontraron registros.</p>}
-      {!loading && filteredItems.length > 0 && <table className="parameter-table"><thead><tr>{gridColumns.map((column) => <th key={column.label}>{column.label}</th>)}<th>Acciones</th></tr></thead><tbody>
-        {filteredItems.map((item) => <tr className={formOpen && text(form.id) === text(idOf(item)) ? "is-editing" : ""} key={idOf(item)}>{gridColumns.map((column) => <td key={column.label}>{column.value(item) || "—"}</td>)}<td><button type="button" onClick={() => { if (onEditItem?.(item) === true) return; setForm(editValues(item)); setFormOpen(true); setResultsVisible(true); setFeedback({ error: "", success: "" }); }}><Pencil size={15} />Editar</button></td></tr>)}
+      {!loading && filteredItems.length > 0 && <table className="parameter-table"><thead><tr><th className="table-actions">Acciones</th>{gridColumns.map((column) => <th key={column.label}>{column.label}</th>)}</tr></thead><tbody>
+        {filteredItems.map((item) => <tr className={formOpen && text(form.id) === text(idOf(item)) ? "is-editing" : ""} key={idOf(item)}><td className="table-actions" data-label="Acciones"><button type="button" onClick={() => { if (onEditItem?.(item) === true) return; setForm(editValues(item)); setFormOpen(true); setResultsVisible(true); setFeedback({ error: "", success: "" }); }}><Pencil size={15} />Editar</button></td>{gridColumns.map((column) => <td data-label={column.label} key={column.label}>{column.value(item) || "—"}</td>)}</tr>)}
       </tbody></table>}
     </div>}
   </section>;

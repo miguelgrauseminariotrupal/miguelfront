@@ -5,7 +5,7 @@ import { useAuth } from "../../context/AuthContext";
 
 const titles = { "/inicio": "Inicio", "/agente-miguel": "Agente Miguel", "/asistencia": "Asistencia", "/evaluaciones": "Evaluaciones", "/evaluaciones/calificaciones": "Calificaciones", "/evaluaciones/configuracion": "Configuración de evaluaciones", "/generar-matricula-curso": "Generar Matrícula - Curso", "/configuracion": "Configuración", "/docentes": "Docentes", "/alumnos": "Alumnos", "/matricula": "Matrícula", "/cursos": "Cursos", "/programacion": "Registro Clase" };
 
-export default function Header({ onOpenMenu, sidebarCollapsed }) {
+export default function Header({ onOpenMenu, navigationOpen }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
   const location = useLocation();
@@ -23,7 +23,7 @@ export default function Header({ onOpenMenu, sidebarCollapsed }) {
   return (
     <header className="app-header">
       <div className="app-header__title">
-        <button className="menu-button" type="button" aria-label={sidebarCollapsed ? "Expandir menú" : "Ocultar menú"} aria-pressed={sidebarCollapsed} onClick={onOpenMenu}><Menu size={22} /></button>
+        <button className="menu-button" type="button" aria-label="Abrir o contraer menú principal" aria-expanded={navigationOpen} aria-controls="main-navigation" onClick={onOpenMenu}><Menu size={22} /></button>
         <h1>{titles[location.pathname] ?? "Miguel"}</h1>
       </div>
       <div className="user-menu" ref={menuRef}>

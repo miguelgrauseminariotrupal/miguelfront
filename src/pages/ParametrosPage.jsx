@@ -4,6 +4,7 @@ import { createAnioLectivo, getAniosLectivos, updateAnioLectivo } from "../servi
 import { createNivel, getNiveles, updateNivel } from "../services/niveles.service";
 import { createGrado, getGrados, updateGrado } from "../services/grados.service";
 import { SeccionesCrud } from "../components/configuration/ConfigurationCruds";
+import YearDuplicationPanel from "../components/configuration/YearDuplicationPanel";
 import { currentAcademicYearId } from "../utils/academicYear";
 
 const tabs = [
@@ -11,6 +12,7 @@ const tabs = [
   { id: "niveles", label: "Nivel" },
   { id: "grados", label: "Grado" },
   { id: "secciones", label: "Secciones" },
+  { id: "duplicar", label: "Duplicar año" },
 ];
 
 function SearchBox({ value, onChange, placeholder = "Buscar..." }) {
@@ -21,8 +23,8 @@ function ResultsTable({ columns, items, loading, query, rowKey, editingId, onEdi
   const normalized = query.trim().toLocaleLowerCase("es");
   const filtered = items.filter((item) => !normalized || columns.some((column) => String(column.value(item) ?? "").toLocaleLowerCase("es").includes(normalized)));
   return <div className="parameter-table-wrap">
-    <table className="parameter-table"><thead><tr>{columns.map((column) => <th key={column.label}>{column.label}</th>)}<th>Acciones</th></tr></thead>
-      <tbody>{filtered.map((item) => <tr className={String(editingId) === String(rowKey(item)) ? "is-editing" : ""} key={rowKey(item)}>{columns.map((column) => <td key={column.label}>{column.value(item) || "—"}</td>)}<td><button type="button" onClick={() => onEdit(item)}><Pencil size={15} />Editar</button></td></tr>)}</tbody></table>
+    <table className="parameter-table"><thead><tr><th className="table-actions">Acciones</th>{columns.map((column) => <th key={column.label}>{column.label}</th>)}</tr></thead>
+      <tbody>{filtered.map((item) => <tr className={String(editingId) === String(rowKey(item)) ? "is-editing" : ""} key={rowKey(item)}><td className="table-actions" data-label="Acciones"><button type="button" onClick={() => onEdit(item)}><Pencil size={15} />Editar</button></td>{columns.map((column) => <td data-label={column.label} key={column.label}>{column.value(item) || "—"}</td>)}</tr>)}</tbody></table>
     {!loading && !filtered.length && <p className="parameter-empty">No se encontraron registros.</p>}
     {loading && <p className="parameter-empty">Cargando...</p>}
   </div>;
@@ -168,6 +170,7 @@ export default function ParametrosPage() {
       </div>
 
       {activeTab === "secciones" && <SeccionesCrud />}
+      {activeTab === "duplicar" && <YearDuplicationPanel years={anios} loadingYears={loading.anios} />}
 
       {activeTab === "anios" && <section className={`parameter-panel flow-panel view-${view.anios}`}>
         <div className="parameter-actions parameter-actions--buttons"><button className="parameter-search-button" type="button" onClick={() => { hideForm("anios"); setModuleView("anios", "search"); }}><Search size={17} />Buscar</button><button className="parameter-create" type="button" onClick={() => { setAnioForm({ id: "", anio: "", nombre: "" }); showForm("anios"); setModuleView("anios", "create"); clearFeedback(); }}><Plus size={17} />Crear año lectivo</button></div>

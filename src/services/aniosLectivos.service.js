@@ -21,3 +21,23 @@ export function updateAnioLectivo(idAnioLectivo, anio, nombre) {
     anio: numericYear,
   });
 }
+
+export function duplicateAnioLectivo({
+  idAnioOrigen,
+  idAnioDestino,
+  incluirEstructura,
+  incluirCursos,
+  incluirCurriculo,
+  incluirProgramacionSecciones,
+  incluirProgramacionCursos,
+}) {
+  return apiPost("/duplicar-anio", {
+    id_anio_origen: Number(idAnioOrigen),
+    id_anio_destino: Number(idAnioDestino),
+    incluir_estructura: incluirEstructura,
+    incluir_cursos: incluirCursos,
+    incluir_curriculo: incluirCurriculo,
+    incluir_programacion_secciones: incluirProgramacionSecciones,
+    incluir_programacion_cursos: incluirProgramacionCursos,
+  });
+}

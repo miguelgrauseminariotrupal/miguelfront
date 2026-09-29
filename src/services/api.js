@@ -6,10 +6,11 @@ const API_URL = configuredUrl
 const API_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim();
 
 export class ApiError extends Error {
-  constructor(message, { status = null, cause = null } = {}) {
+  constructor(message, { status = null, cause = null, details = null } = {}) {
     super(message, { cause });
     this.name = "ApiError";
     this.status = status;
+    this.details = details;
   }
 }
 
@@ -39,16 +40,35 @@ export async function apiRequest(path, { method = "GET", params = {}, body, sign
 
   if (!response.ok) {
     let backendMessage = "";
+    let rawResponse = "";
     try {
-      const errorBody = await response.json();
-      backendMessage = errorBody?.message || errorBody?.error || errorBody?.detalle || errorBody?.detail || "";
+      rawResponse = (await response.text()).trim();
+      if (rawResponse) {
+        try {
+          const errorBody = JSON.parse(rawResponse);
+          const candidate = errorBody?.message || errorBody?.error || errorBody?.detalle || errorBody?.detail;
+          backendMessage = typeof candidate === "string" ? candidate : candidate ? JSON.stringify(candidate) : rawResponse;
+        } catch {
+          backendMessage = rawResponse;
+        }
+      }
     } catch {
       // El backend puede responder sin cuerpo o con contenido que no sea JSON.
     }
     const message = backendMessage
-      ? `El servidor rechazó la solicitud: ${backendMessage}`
-      : `El servidor respondió con un error HTTP ${response.status}.`;
-    throw new ApiError(message, { status: response.status });
+      ? `Error HTTP ${response.status}: ${backendMessage}`
+      : `El servidor respondió con un error HTTP ${response.status} sin indicar el motivo.`;
+    const details = {
+      method,
+      url: url.toString(),
+      status: response.status,
+      statusText: response.statusText,
+      requestId: response.headers.get("sb-request-id") || response.headers.get("x-request-id") || "No proporcionado",
+      response: rawResponse || "Respuesta vacía",
+      payload: body ?? null,
+    };
+    console.error("API request failed", details);
+    throw new ApiError(message, { status: response.status, details });
   }
 
   if (response.status === 204) return null;

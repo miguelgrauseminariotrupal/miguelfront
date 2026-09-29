@@ -73,6 +73,8 @@ tags:
     description: Competencias por curso, opcionalmente ligadas a un aprendizaje (mg_competencia)
   - name: Capacidades
     description: Capacidades de una competencia (mg_capacidades)
+  - name: DuplicarAnio
+    description: Duplicar configuración de un año lectivo a otro, por bloques.
 
 components:
   securitySchemes:
@@ -633,6 +635,74 @@ components:
         descripcion: { type: string }
         id_competencia: { type: integer, nullable: true }
         estado: { type: boolean }
+
+    DuplicarAnioRequest:
+      type: object
+      description: >
+        Al menos un 'incluir_*' debe venir en true. Los bloques con
+        dependencias (grados necesita niveles, competencias necesita cursos y
+        aprendizajes, programacion_cursos necesita programacion_secciones y
+        cursos) resuelven el mapeo automáticamente, buscando también lo que
+        ya exista en el año destino por nombre (no solo lo creado en la misma
+        llamada).
+      properties:
+        id_anio_origen: { type: integer }
+        id_anio_destino: { type: integer }
+        incluir_estructura:
+          type: boolean
+          default: false
+          description: Niveles + grados + secciones.
+        incluir_cursos:
+          type: boolean
+          default: false
+        incluir_curriculo:
+          type: boolean
+          default: false
+          description: Aprendizajes + competencias + capacidades.
+        incluir_programacion_secciones:
+          type: boolean
+          default: false
+          description: >
+            Copia la sección con el mismo docente responsable. estado_completado
+            siempre queda en false en los registros nuevos (no se copia).
+        incluir_programacion_cursos:
+          type: boolean
+          default: false
+          description: Copia curso + mismo docente asignados a cada sección.
+      required: [id_anio_origen, id_anio_destino]
+
+    DuplicarAnioResultadoBloque:
+      type: object
+      properties:
+        creados: { type: integer }
+        ya_existian: { type: integer }
+        omitidos:
+          type: array
+          items: { type: integer }
+          description: ids de origen que no se pudieron mapear/crear (padre faltante en destino).
+      required: [creados, ya_existian, omitidos]
+
+    DuplicarAnioResponse:
+      type: object
+      properties:
+        id_anio_origen: { type: integer }
+        id_anio_destino: { type: integer }
+        estructura:
+          type: object
+          properties:
+            niveles: { $ref: '#/components/schemas/DuplicarAnioResultadoBloque' }
+            grados: { $ref: '#/components/schemas/DuplicarAnioResultadoBloque' }
+            secciones: { $ref: '#/components/schemas/DuplicarAnioResultadoBloque' }
+        cursos: { $ref: '#/components/schemas/DuplicarAnioResultadoBloque' }
+        curriculo:
+          type: object
+          properties:
+            aprendizajes: { $ref: '#/components/schemas/DuplicarAnioResultadoBloque' }
+            competencias: { $ref: '#/components/schemas/DuplicarAnioResultadoBloque' }
+            capacidades: { $ref: '#/components/schemas/DuplicarAnioResultadoBloque' }
+        programacion_secciones: { $ref: '#/components/schemas/DuplicarAnioResultadoBloque' }
+        programacion_cursos: { $ref: '#/components/schemas/DuplicarAnioResultadoBloque' }
+      required: [id_anio_origen, id_anio_destino]
 
   parameters:
     EstadoFilter:
@@ -2024,3 +2094,27 @@ paths:
         '400': { $ref: '#/components/responses/BadRequest' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
+
+  /duplicar-anio:
+    post:
+      tags: [DuplicarAnio]
+      summary: Duplicar configuración de un año lectivo a otro, por bloques
+      description: >
+        Copia estructura académica, cursos, currículo y/o programación de un
+        año lectivo (origen) a otro (destino) ya existente, activando solo
+        los bloques que se necesiten. Es idempotente: si algo ya existe en el
+        destino (por nombre, o por la combinación que corresponda), no lo
+        duplica de nuevo.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DuplicarAnioRequest' }
+      responses:
+        '201':
+          description: Resultado de la duplicación, por bloque
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DuplicarAnioResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '500': { $ref: '#/components/responses/ServerError' }
