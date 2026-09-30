@@ -4,6 +4,19 @@ const API_URL = configuredUrl
   ? configuredUrl.endsWith("/functions") ? `${configuredUrl}/v1` : configuredUrl
   : OPENAPI_SERVER_URL;
 const API_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim();
+const JWT_FUTURE_RELOAD_KEY = "miguel_jwt_future_reload";
+const JWT_FUTURE_RELOAD_COOLDOWN = 30000;
+
+function reloadOnFutureJwtError(message) {
+  if (!/jwt\s+issued\s+(?:at|in)(?:\s+the)?\s+future/i.test(message)) return false;
+
+  const lastReload = Number(sessionStorage.getItem(JWT_FUTURE_RELOAD_KEY) || 0);
+  if (Date.now() - lastReload < JWT_FUTURE_RELOAD_COOLDOWN) return false;
+
+  sessionStorage.setItem(JWT_FUTURE_RELOAD_KEY, String(Date.now()));
+  window.location.reload();
+  return true;
+}
 
 export class ApiError extends Error {
   constructor(message, { status = null, cause = null, details = null } = {}) {
@@ -54,6 +67,9 @@ export async function apiRequest(path, { method = "GET", params = {}, body, sign
       }
     } catch {
       // El backend puede responder sin cuerpo o con contenido que no sea JSON.
+    }
+    if (reloadOnFutureJwtError(`${backendMessage} ${rawResponse}`)) {
+      return new Promise(() => {});
     }
     const message = backendMessage
       ? `Error HTTP ${response.status}: ${backendMessage}`
