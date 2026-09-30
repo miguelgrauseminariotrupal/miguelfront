@@ -137,6 +137,11 @@ export default function YearDuplicationPanel({ years, loadingYears }) {
       <div className="duplication-review__actions"><button className="parameter-cancel" type="button" onClick={() => setReviewing(false)}>Volver</button><button className="parameter-save" type="button" disabled={duplicating} onClick={duplicate}><Copy size={16} />{duplicating ? "Duplicando..." : "Confirmar y duplicar"}</button></div>
     </div>}
 
+    {duplicating && <div className="duplication-progress" role="status" aria-live="polite">
+      <div className="duplication-progress__heading"><strong>Duplicando configuración...</strong><span>Este proceso puede tardar unos momentos.</span></div>
+      <div className="duplication-progress__track" aria-label="Duplicación en curso"><span /></div>
+    </div>}
+
     {!reviewing && !result && <div className="duplication-actions"><button className="parameter-cancel" type="button" onClick={reset}><RotateCcw size={16} />Limpiar</button><button className="parameter-save" type="button" disabled={!validSelection || duplicating} onClick={() => setReviewing(true)}><Copy size={16} />Revisar duplicación</button></div>}
     {feedback && <p className="parameter-feedback is-error" role="alert">{feedback}</p>}
     {diagnostic && <details className="duplication-diagnostic" open>
