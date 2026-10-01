@@ -1,4 +1,4 @@
-import { Bot, BookOpen, CalendarCheck, ClipboardCheck, GraduationCap, Home, ListChecks, Presentation, Settings2, UserPlus, Users, X } from "lucide-react";
+import { Bot, BookOpen, CalendarCheck, ClipboardCheck, GraduationCap, Home, ListChecks, ListTree, Presentation, Settings2, UserPlus, Users, X } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
@@ -6,6 +6,7 @@ const primaryItems = [
   { label: "Inicio", path: "/inicio", icon: Home },
   { label: "Asistencia", path: "/asistencia", icon: CalendarCheck },
   { label: "Calificaciones", path: "/evaluaciones/calificaciones", icon: ClipboardCheck },
+  { label: "Plan de evaluación", path: "/evaluaciones/configuracion", icon: ListTree },
   { label: "Agente académico", path: "/agente-miguel", icon: Bot },
 ];
 

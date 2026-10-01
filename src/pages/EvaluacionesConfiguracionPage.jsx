@@ -8,7 +8,7 @@ import { createAprendizaje, getAprendizajes, updateAprendizaje } from "../servic
 import { createCompetencia, getCompetencias, updateCompetencia } from "../services/competencias.service";
 import { createCapacidad, getCapacidades, updateCapacidad } from "../services/capacidades.service";
 
-const tabs = [{ id: "consolidado", label: "Consolidado" }, { id: "aprendizajes", label: "Aprendizajes" }, { id: "competencias", label: "Competencias" }, { id: "capacidades", label: "Capacidades" }];
+const tabs = [{ id: "consolidado", label: "Relación curso y año" }, { id: "aprendizajes", label: "Aprendizajes" }, { id: "competencias", label: "Competencias" }, { id: "capacidades", label: "Capacidades" }];
 const blank = {
   aprendizajes: { id: "", nombre_aprendizaje: "", id_anio_lectivo: "", estado: true },
   competencias: { id: "", id_curso: "", codigo: "", descripcion: "", id_aprendizaje: "", tipo: "", estado: true },
@@ -82,7 +82,7 @@ export default function EvaluacionesConfiguracionPage() {
   const contextLabel = tab === "aprendizajes" ? `Año: ${maps.years.get(String(form.id_anio_lectivo))?.anio || "—"}` : tab === "competencias" ? `Aprendizaje: ${maps.learnings.get(String(form.id_aprendizaje))?.nombre_aprendizaje || "—"} · Curso: ${maps.courses.get(String(form.id_curso))?.nombre || "—"}` : `Aprendizaje: ${maps.learnings.get(String(selected.aprendizaje))?.nombre_aprendizaje || "—"} · Curso: ${maps.courses.get(String(selected.curso))?.nombre || "—"} · Competencia: ${maps.competencies.get(String(form.id_competencia))?.descripcion || "—"}`;
   const searchBox = (placeholder) => <label className="tree-search management-search"><Search size={17} /><input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={placeholder} /></label>;
 
-  return <main className="page-content evaluation-settings-page"><div className="page-heading"><h2>Configuración de evaluaciones</h2><p>Administra aprendizajes, competencias y capacidades</p></div><div className="parameter-tabs" role="tablist">{tabs.map((item) => <button type="button" key={item.id} className={tab === item.id ? "is-active" : ""} onClick={() => selectTab(item.id)}>{item.label}</button>)}</div><section className="parameter-panel evaluation-panel">
+  return <main className="page-content evaluation-settings-page"><div className="page-heading"><h2>Plan de evaluación</h2><p>Administra aprendizajes, competencias, capacidades y su relación con cursos y años lectivos.</p></div><div className="parameter-tabs" role="tablist">{tabs.map((item) => <button type="button" key={item.id} className={tab === item.id ? "is-active" : ""} onClick={() => selectTab(item.id)}>{item.label}</button>)}</div><section className="parameter-panel evaluation-panel">
     {tab === "consolidado" && <ConsolidatedView {...data} loading={loading} onEditLearning={(item, context) => openEdit("aprendizajes", item, context)} onEditCompetency={(item, context) => openEdit("competencias", item, context)} onAddCapacity={(context) => openCreate("capacidades", context)} onEditCapacity={(item, context) => openEdit("capacidades", item, context)} />}
     {tab === "competencias" && mode === "list" && selected.aprendizaje && !selected.curso && <div className="course-create-standalone"><button className="parameter-create" type="button" onClick={() => openCreate("competencias", { ...selected, curso: "", competencia: "" })}><Plus size={16} />Nueva competencia</button></div>}
 
