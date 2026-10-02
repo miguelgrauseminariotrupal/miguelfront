@@ -73,8 +73,18 @@ tags:
     description: Competencias por curso, opcionalmente ligadas a un aprendizaje (mg_competencia)
   - name: Capacidades
     description: Capacidades de una competencia (mg_capacidades)
+  - name: Bimestres
+    description: Bimestres de un año lectivo (mg_bimestre)
+  - name: Notas
+    description: Consulta de notas (finales y por bimestre) de un alumno en un curso.
+  - name: DocenteResponsable
+    description: Consulta del docente que dicta un curso puntual en una sección.
   - name: DuplicarAnio
     description: Duplicar configuración de un año lectivo a otro, por bloques.
+  - name: GenerarPlantillasNotas
+    description: >
+      Genera las plantillas de evaluación (filas con id_valor=NULL) para
+      todas las matrículas de curso de un año lectivo.
 
 components:
   securitySchemes:
@@ -405,14 +415,28 @@ components:
 
     Matricula:
       type: object
-      description: Relación directa con mg_seccion vía 'id_seccion'.
+      description: >
+        Relación directa con mg_seccion vía 'id_seccion'. Siempre incluye el
+        alumno embebido en 'mg_estudiante' (no hace falta una segunda
+        consulta a /estudiantes).
       properties:
         id_matricula: { type: integer, readOnly: true }
         id_seccion: { type: integer }
         id_estudiante: { type: integer }
         fecha_matricula: { type: string, format: date }
         estado: { type: boolean, default: true }
-      required: [id_matricula, id_seccion, id_estudiante, fecha_matricula, estado]
+        mg_estudiante:
+          type: object
+          readOnly: true
+          properties:
+            id_estudiante: { type: integer }
+            nombres: { type: string }
+            apellido_paterno: { type: string, nullable: true }
+            apellido_materno: { type: string, nullable: true }
+            dni: { type: string, nullable: true }
+            fecha_nacimiento: { type: string, format: date, nullable: true }
+            estado: { type: boolean }
+      required: [id_matricula, id_seccion, id_estudiante, fecha_matricula, estado, mg_estudiante]
 
     MatriculaCreate:
       type: object
@@ -636,6 +660,142 @@ components:
         id_competencia: { type: integer, nullable: true }
         estado: { type: boolean }
 
+    Bimestre:
+      type: object
+      properties:
+        id_bimestre: { type: integer, readOnly: true }
+        id_anio_lectivo: { type: integer }
+        numero: { type: integer, example: 1 }
+        nombre: { type: string, example: "Bimestre 1" }
+        fecha_inicio: { type: string, format: date, nullable: true }
+        fecha_fin: { type: string, format: date, nullable: true }
+        estado: { type: boolean, default: true }
+      required: [id_bimestre, id_anio_lectivo, numero, nombre, estado]
+
+    BimestreCreate:
+      type: object
+      properties:
+        id_anio_lectivo: { type: integer }
+        numero: { type: integer, example: 1 }
+        nombre: { type: string, example: "Bimestre 1" }
+        fecha_inicio: { type: string, format: date }
+        fecha_fin: { type: string, format: date }
+        estado: { type: boolean, default: true }
+      required: [id_anio_lectivo, numero, nombre]
+
+    BimestreUpdate:
+      type: object
+      properties:
+        id_anio_lectivo: { type: integer }
+        numero: { type: integer }
+        nombre: { type: string }
+        fecha_inicio: { type: string, format: date, nullable: true }
+        fecha_fin: { type: string, format: date, nullable: true }
+        estado: { type: boolean }
+
+    ValorEvaluacionResumen:
+      type: object
+      nullable: true
+      description: Null si la nota todavía no tiene un valor asignado.
+      properties:
+        codigo: { type: string, example: "AD" }
+        descripcion: { type: string, example: "Logro destacado" }
+
+    NotaFinalCapacidad:
+      type: object
+      properties:
+        id_evaluacion_capacidad: { type: integer }
+        id_capacidad: { type: integer }
+        codigo: { type: string, nullable: true }
+        id_valor: { type: integer, nullable: true }
+        valor: { $ref: '#/components/schemas/ValorEvaluacionResumen' }
+        estado: { type: boolean }
+
+    NotaFinalCompetencia:
+      type: object
+      properties:
+        id_evaluacion_competencia: { type: integer }
+        id_competencia: { type: integer }
+        codigo: { type: string, nullable: true }
+        observacion: { type: string, nullable: true }
+        id_valor: { type: integer, nullable: true }
+        valor: { $ref: '#/components/schemas/ValorEvaluacionResumen' }
+        estado: { type: boolean }
+        capacidades:
+          type: array
+          items: { $ref: '#/components/schemas/NotaFinalCapacidad' }
+
+    NotasFinalesResponse:
+      type: object
+      properties:
+        id_matricula: { type: integer }
+        id_curso: { type: integer }
+        id_matricula_curso: { type: integer }
+        competencias:
+          type: array
+          items: { $ref: '#/components/schemas/NotaFinalCompetencia' }
+      required: [id_matricula, id_curso, id_matricula_curso, competencias]
+
+    NotaBimestreCapacidad:
+      type: object
+      properties:
+        id_evaluacion_capacidad: { type: integer }
+        id_capacidad: { type: integer }
+        codigo: { type: string, nullable: true }
+        estado: { type: boolean }
+        id_valor: { type: integer, nullable: true }
+        valor: { $ref: '#/components/schemas/ValorEvaluacionResumen' }
+
+    NotaBimestreCompetencia:
+      type: object
+      properties:
+        id_evaluacion_competencia: { type: integer }
+        id_competencia: { type: integer }
+        codigo: { type: string, nullable: true }
+        observacion: { type: string, nullable: true }
+        estado: { type: boolean }
+        id_valor: { type: integer, nullable: true }
+        valor: { $ref: '#/components/schemas/ValorEvaluacionResumen' }
+        capacidades:
+          type: array
+          items: { $ref: '#/components/schemas/NotaBimestreCapacidad' }
+
+    NotaBimestreGrupo:
+      type: object
+      description: Un bimestre con todas las competencias/capacidades evaluadas en él.
+      properties:
+        id_bimestre: { type: integer }
+        numero: { type: integer }
+        nombre: { type: string }
+        competencias:
+          type: array
+          items: { $ref: '#/components/schemas/NotaBimestreCompetencia' }
+
+    NotasBimestreResponse:
+      type: object
+      properties:
+        id_matricula: { type: integer }
+        id_curso: { type: integer }
+        id_matricula_curso: { type: integer }
+        bimestres:
+          type: array
+          items: { $ref: '#/components/schemas/NotaBimestreGrupo' }
+      required: [id_matricula, id_curso, id_matricula_curso, bimestres]
+
+    DocenteResponsableResponse:
+      type: object
+      description: >
+        'docente' es quien dicta ESE curso en ESA sección
+        (mg_programacion_curso.id_docente) — no confundir con el tutor
+        general de la sección (mg_programacion_seccion.id_docente_responsable).
+      properties:
+        id_seccion: { type: integer }
+        id_curso: { type: integer }
+        id_programacion_curso: { type: integer }
+        estado: { type: boolean }
+        docente: { $ref: '#/components/schemas/Docente' }
+      required: [id_seccion, id_curso, id_programacion_curso, estado, docente]
+
     DuplicarAnioRequest:
       type: object
       description: >
@@ -703,6 +863,25 @@ components:
         programacion_secciones: { $ref: '#/components/schemas/DuplicarAnioResultadoBloque' }
         programacion_cursos: { $ref: '#/components/schemas/DuplicarAnioResultadoBloque' }
       required: [id_anio_origen, id_anio_destino]
+
+    GenerarPlantillasNotasRequest:
+      type: object
+      properties:
+        id_anio: { type: integer }
+      required: [id_anio]
+
+    GenerarPlantillasNotasResponse:
+      type: object
+      description: >
+        Cuenta de filas creadas en cada tabla. Si ya se había corrido antes
+        para ese año, los conteos pueden salir en 0 (nada nuevo que generar).
+      properties:
+        id_anio: { type: integer }
+        competencias_creadas: { type: integer }
+        capacidades_creadas: { type: integer }
+        competencias_bimestre_creadas: { type: integer }
+        capacidades_bimestre_creadas: { type: integer }
+      required: [id_anio, competencias_creadas, capacidades_creadas, competencias_bimestre_creadas, capacidades_bimestre_creadas]
 
   parameters:
     EstadoFilter:
@@ -2095,6 +2274,184 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
 
+  /bimestres:
+    get:
+      tags: [Bimestres]
+      summary: Listar bimestres
+      parameters:
+        - name: id_anio_lectivo
+          in: query
+          schema: { type: integer }
+        - $ref: '#/components/parameters/EstadoFilter'
+        - name: q
+          in: query
+          description: Búsqueda parcial (ILIKE) en nombre.
+          schema: { type: string }
+      responses:
+        '200':
+          description: Lista de bimestres
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Bimestre' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '500': { $ref: '#/components/responses/ServerError' }
+    post:
+      tags: [Bimestres]
+      summary: Crear bimestre
+      description: "Campos obligatorios: `id_anio_lectivo`, `numero`, `nombre`. Opcionales: `fecha_inicio`, `fecha_fin`, `estado` (default true)."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BimestreCreate' }
+      responses:
+        '201':
+          description: Bimestre creado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Bimestre' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /bimestres/{id}:
+    get:
+      tags: [Bimestres]
+      summary: Obtener bimestre por id
+      parameters: [{ $ref: '#/components/parameters/IdPath' }]
+      responses:
+        '200':
+          description: Bimestre
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Bimestre' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Bimestres]
+      summary: Actualizar bimestre
+      description: "Todos los campos son opcionales, pero debe enviarse al menos uno."
+      parameters: [{ $ref: '#/components/parameters/IdPath' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BimestreUpdate' }
+      responses:
+        '200':
+          description: Bimestre actualizado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Bimestre' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /notas-finales:
+    get:
+      tags: [Notas]
+      summary: Notas finales de un alumno en un curso
+      description: >
+        Devuelve mg_evaluacion_competencia + mg_evaluacion_capacidades de la
+        matrícula de ese alumno en ese curso, agrupadas (cada competencia con
+        sus capacidades anidadas). 'id_valor'/'valor' vienen null si la nota
+        final todavía no se calculó/asignó.
+      parameters:
+        - name: id_matricula
+          in: query
+          required: true
+          schema: { type: integer }
+        - name: id_curso
+          in: query
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Notas finales agrupadas por competencia
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NotasFinalesResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404':
+          description: No existe una matrícula de ese alumno en ese curso.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /notas-bimestre:
+    get:
+      tags: [Notas]
+      summary: Notas por bimestre de un alumno en un curso
+      description: >
+        Devuelve mg_evaluacion_competencia_bimestre +
+        mg_evaluacion_capacidades_bimestre de la matrícula de ese alumno en
+        ese curso, agrupadas por bimestre primero (bimestre -> competencias
+        -> capacidades) — a diferencia de /notas-finales, que agrupa por
+        competencia. `id_bimestre` es opcional: si se omite, trae todos los
+        bimestres con datos; si se envía, el arreglo `bimestres` queda
+        acotado a ese uno.
+      parameters:
+        - name: id_matricula
+          in: query
+          required: true
+          schema: { type: integer }
+        - name: id_curso
+          in: query
+          required: true
+          schema: { type: integer }
+        - name: id_bimestre
+          in: query
+          required: false
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Notas por bimestre, agrupadas por bimestre
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NotasBimestreResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404':
+          description: No existe una matrícula de ese alumno en ese curso.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /docente-responsable:
+    get:
+      tags: [DocenteResponsable]
+      summary: Docente que dicta un curso puntual en una sección
+      description: >
+        Resuelve mg_programacion_seccion por 'id_seccion', y dentro de esa
+        programación busca mg_programacion_curso para 'id_curso', devolviendo
+        el docente asignado (mg_programacion_curso.id_docente).
+      parameters:
+        - name: id_seccion
+          in: query
+          required: true
+          schema: { type: integer }
+        - name: id_curso
+          in: query
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Docente responsable de ese curso en esa sección
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DocenteResponsableResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404':
+          description: >
+            No existe programación para esa sección, o ese curso no está
+            programado para esa sección.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
   /duplicar-anio:
     post:
       tags: [DuplicarAnio]
@@ -2116,5 +2473,30 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/DuplicarAnioResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /generar-plantillas-notas:
+    post:
+      tags: [GenerarPlantillasNotas]
+      summary: Generar plantillas de evaluación para un año lectivo
+      description: >
+        Llama al stored procedure `generar_plantillas_notas(p_id_anio)`
+        (corre en una sola transacción en la base). Genera, para todas las
+        matrículas de curso del año, las filas de mg_evaluacion_competencia,
+        mg_evaluacion_capacidades, mg_evaluacion_competencia_bimestre y
+        mg_evaluacion_capacidades_bimestre con id_valor=NULL. Es idempotente:
+        volver a llamarla no duplica lo ya generado.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GenerarPlantillasNotasRequest' }
+      responses:
+        '201':
+          description: Conteo de filas creadas por tabla
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GenerarPlantillasNotasResponse' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '500': { $ref: '#/components/responses/ServerError' }
