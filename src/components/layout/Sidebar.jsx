@@ -6,7 +6,6 @@ const primaryItems = [
   { label: "Inicio", path: "/inicio", icon: Home },
   { label: "Asistencia", path: "/asistencia", icon: CalendarCheck },
   { label: "Calificaciones", path: "/evaluaciones/calificaciones", icon: ClipboardCheck },
-  { label: "Plan de evaluación", path: "/evaluaciones/configuracion", icon: ListTree },
   { label: "Agente académico", path: "/agente-miguel", icon: Bot },
 ];
 
@@ -17,6 +16,7 @@ const managementItems = [
   { label: "Alumnos", path: "/alumnos", icon: GraduationCap },
   { label: "Cursos", path: "/cursos", icon: BookOpen },
   { label: "Asignar cursos", path: "/generar-matricula-curso", icon: ListChecks },
+  { label: "Plan de evaluación", path: "/evaluaciones/configuracion", icon: ListTree },
   { label: "Configuración", path: "/configuracion", icon: Settings2 },
 ];
 
