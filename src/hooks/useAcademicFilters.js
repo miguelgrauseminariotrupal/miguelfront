@@ -15,12 +15,14 @@ export default function useAcademicFilters() {
   const [lists, setLists] = useState(emptyLists);
   const [loading, setLoading] = useState(emptyLoading);
   const [errors, setErrors] = useState(emptyErrors);
+  const [opened, setOpened] = useState({ niveles: false, grados: false, secciones: false });
 
   useEffect(() => {
     const controller = new AbortController();
     setLoading((state) => ({ ...state, anios: true }));
     getAniosLectivos({ signal: controller.signal })
       .then(async (anios) => {
+        if (controller.signal.aborted) return;
         setLists((state) => ({ ...state, anios }));
         const currentId = currentAcademicYearId(anios);
         if (currentId) await selectAnio(currentId);
@@ -32,46 +34,77 @@ export default function useAcademicFilters() {
 
   const selectAnio = async (anio) => {
     setSelection({ anio, nivel: "", grado: "", seccion: "" });
+    setOpened({ niveles: false, grados: false, secciones: false });
+    setLoading((state) => ({ ...state, niveles: false, grados: false, secciones: false }));
     setLists((state) => ({ ...state, niveles: [], grados: [], secciones: [] }));
     setErrors((state) => ({ ...state, niveles: "", grados: "", secciones: "" }));
-    if (!anio) return;
+  };
+
+  useEffect(() => {
+    if (!selection.anio || !opened.niveles) return;
+    const controller = new AbortController();
+    const anio = selection.anio;
+    async function load() {
     setLoading((state) => ({ ...state, niveles: true }));
     try {
-      const niveles = await getNiveles(anio);
-      setLists((state) => ({ ...state, niveles }));
+      const niveles = await getNiveles(anio, { signal: controller.signal });
+      if (!controller.signal.aborted) setLists((state) => ({ ...state, niveles }));
     }
-    catch (error) { setErrors((state) => ({ ...state, niveles: error.message })); }
-    finally { setLoading((state) => ({ ...state, niveles: false })); }
-  };
+    catch (error) { if (!controller.signal.aborted) setErrors((state) => ({ ...state, niveles: error.message })); }
+    finally { if (!controller.signal.aborted) setLoading((state) => ({ ...state, niveles: false })); }
+    }
+    load(); return () => controller.abort();
+  }, [selection.anio, opened.niveles]);
 
   const selectNivel = async (nivel) => {
     setSelection((state) => ({ ...state, nivel, grado: "", seccion: "" }));
+    setOpened((state) => ({ ...state, grados: false, secciones: false }));
+    setLoading((state) => ({ ...state, grados: false, secciones: false }));
     setLists((state) => ({ ...state, grados: [], secciones: [] }));
     setErrors((state) => ({ ...state, grados: "", secciones: "" }));
-    if (!nivel) return;
+  };
+
+  useEffect(() => {
+    if (!selection.nivel || !opened.grados) return;
+    const controller = new AbortController();
+    const nivel = selection.nivel;
+    async function load() {
     setLoading((state) => ({ ...state, grados: true }));
     try {
-      const grados = await getGrados(nivel);
-      setLists((state) => ({ ...state, grados }));
+      const grados = await getGrados(nivel, { signal: controller.signal });
+      if (!controller.signal.aborted) setLists((state) => ({ ...state, grados }));
     }
-    catch (error) { setErrors((state) => ({ ...state, grados: error.message })); }
-    finally { setLoading((state) => ({ ...state, grados: false })); }
-  };
+    catch (error) { if (!controller.signal.aborted) setErrors((state) => ({ ...state, grados: error.message })); }
+    finally { if (!controller.signal.aborted) setLoading((state) => ({ ...state, grados: false })); }
+    }
+    load(); return () => controller.abort();
+  }, [selection.nivel, opened.grados]);
 
   const selectGrado = async (grado) => {
     setSelection((state) => ({ ...state, grado, seccion: "" }));
+    setOpened((state) => ({ ...state, secciones: false }));
+    setLoading((state) => ({ ...state, secciones: false }));
     setLists((state) => ({ ...state, secciones: [] }));
     setErrors((state) => ({ ...state, secciones: "" }));
-    if (!grado) return;
-    setLoading((state) => ({ ...state, secciones: true }));
-    try {
-      const secciones = await getSecciones(grado);
-      setLists((state) => ({ ...state, secciones }));
-    }
-    catch (error) { setErrors((state) => ({ ...state, secciones: error.message })); }
-    finally { setLoading((state) => ({ ...state, secciones: false })); }
   };
 
+  useEffect(() => {
+    if (!selection.grado || !opened.secciones) return;
+    const controller = new AbortController();
+    const grado = selection.grado;
+    async function load() {
+    setLoading((state) => ({ ...state, secciones: true }));
+    try {
+      const secciones = await getSecciones(grado, { signal: controller.signal });
+      if (!controller.signal.aborted) setLists((state) => ({ ...state, secciones }));
+    }
+    catch (error) { if (!controller.signal.aborted) setErrors((state) => ({ ...state, secciones: error.message })); }
+    finally { if (!controller.signal.aborted) setLoading((state) => ({ ...state, secciones: false })); }
+    }
+    load(); return () => controller.abort();
+  }, [selection.grado, opened.secciones]);
+
   const selectSeccion = (seccion) => setSelection((state) => ({ ...state, seccion }));
-  return { selection, lists, loading, errors, selectAnio, selectNivel, selectGrado, selectSeccion };
+  const openList = (field) => { setErrors((state) => ({ ...state, [field]: "" })); setOpened((state) => ({ ...state, [field]: errors[field] || !state[field] ? (state[field] || 0) + 1 : state[field] })); };
+  return { selection, lists, loading, errors, opened, openList, selectAnio, selectNivel, selectGrado, selectSeccion };
 }

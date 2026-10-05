@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AlertCircle, Award, BookOpen, ChevronRight, ClipboardCheck, RefreshCw, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import AcademicFilters from "../academic/AcademicFilters";
@@ -7,6 +7,7 @@ import { getMatriculaCursos } from "../../services/matriculaCursos.service";
 import { getProgramacionCursos } from "../../services/programacionCursos.service";
 import { getCursos } from "../../services/cursos.service";
 import { getBimestres, getNotasMatriculaCurso, getValoresEvaluacion } from "../../services/notas.service";
+import { createLazyRecords } from "../../utils/lazyRecords";
 import { summarizeGrades } from "../../utils/gradeDashboard";
 
 async function mapLimited(items, task, signal) {
@@ -31,10 +32,14 @@ export default function GradesDashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [refresh, setRefresh] = useState(0);
+  const [pairs, setPairs] = useState([]);
+  const noteCache = useRef(createLazyRecords());
+  const [notesLoading, setNotesLoading] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
     const signal = controller.signal;
+    setPairs([]); noteCache.current = createLazyRecords();
     setError(""); setData({ periods: [], scale: [], courses: [], records: [], students: 0 }); setCourse(""); setPeriod("");
     if (!selection.anio) { setLoading(false); return () => controller.abort(); }
     setLoading(true);
@@ -53,15 +58,33 @@ export default function GradesDashboard() {
         const program = programMap.get(String(assignment.id_programacion_curso));
         if (enrollment && program && courseIds.has(String(program.id_curso))) uniquePairs.set(`${enrollment.id_matricula}-${program.id_curso}`, { ...enrollment, id_curso: program.id_curso });
       }
-      const records = await mapLimited([...uniquePairs.values()], async (item) => ({ ...await getNotasMatriculaCurso({ id_matricula: item.id_matricula, id_curso: item.id_curso, signal }), id_estudiante: item.id_estudiante, id_curso: item.id_curso }), signal);
+      const availableCourses = courses.filter((item) => [...uniquePairs.values()].some((pair) => String(pair.id_curso) === String(item.id_curso)));
       if (signal.aborted) return;
       const sortedPeriods = [...periods].sort((a, b) => a.numero - b.numero);
-      setData({ periods: sortedPeriods, scale, courses: courses.filter((item) => [...uniquePairs.values()].some((pair) => String(pair.id_curso) === String(item.id_curso))), records, students: new Set(enrollments.map((item) => String(item.id_estudiante))).size });
+      setData({ periods: sortedPeriods, scale, courses: availableCourses, records: [], students: new Set(enrollments.map((item) => String(item.id_estudiante))).size });
+      setPairs([...uniquePairs.values()]);
+      setCourse(String(availableCourses[0]?.id_curso || ""));
       setPeriod(String(sortedPeriods[0]?.id_bimestre || "annual"));
     }
     load().catch((err) => { if (!signal.aborted) { setError(err.message || "No se pudieron cargar las calificaciones."); controller.abort(); setLoading(false); } }).finally(() => { if (!signal.aborted) setLoading(false); });
     return () => controller.abort();
   }, [selection, refresh]);
+
+  useEffect(() => {
+    if (!pairs.length) { setNotesLoading(false); return; }
+    let active = true;
+    const cache = noteCache.current;
+    setNotesLoading(true);
+    setError("");
+    setData((current) => ({ ...current, records: [] }));
+    const selectedPairs = pairs.filter((item) => !course || String(item.id_curso) === course);
+    // Each course is fetched on selection; "Todos" is an explicit aggregate request.
+    mapLimited(selectedPairs, async (item) => ({ ...await cache.load(`${item.id_matricula}:${item.id_curso}`, () => getNotasMatriculaCurso({ id_matricula: item.id_matricula, id_curso: item.id_curso })), id_estudiante: item.id_estudiante, id_curso: item.id_curso }), { get aborted() { return !active; } })
+      .then((records) => { if (active) setData((current) => ({ ...current, records })); })
+      .catch((error) => { if (active) setError(error.message); })
+      .finally(() => { if (active) setNotesLoading(false); });
+    return () => { active = false; };
+  }, [pairs, course]);
 
   const records = useMemo(() => data.records.filter((item) => !course || String(item.id_curso) === course), [data.records, course]);
   const metrics = useMemo(() => summarizeGrades(records, period, data.scale), [records, period, data.scale]);
@@ -72,7 +95,7 @@ export default function GradesDashboard() {
   return <section className="daily-dashboard grades-dashboard" aria-labelledby="evaluations-dashboard-title">
     <div className="daily-dashboard__heading"><div><span>Rendimiento académico</span><h3 id="evaluations-dashboard-title">Dashboard de calificaciones</h3></div><button className="grades-refresh" onClick={() => setRefresh((value) => value + 1)} disabled={loading || !selection.anio}><RefreshCw size={16} />Actualizar</button></div>
     <AcademicFilters onSelectionChange={onSelection} />
-    {!selection.anio ? <div className="dashboard-state"><ClipboardCheck size={24} /><p>Selecciona un año lectivo para consultar las calificaciones.</p></div> : loading ? <div className="dashboard-state" role="status"><span className="dashboard-loader" /><p>Preparando indicadores de calificaciones...</p></div> : error ? <div className="dashboard-state is-error" role="alert"><AlertCircle size={24} /><p>{error}</p><button onClick={() => setRefresh((value) => value + 1)}>Reintentar</button></div> : <>
+    {!selection.anio ? <div className="dashboard-state"><ClipboardCheck size={24} /><p>Selecciona un año lectivo para consultar las calificaciones.</p></div> : loading || notesLoading ? <div className="dashboard-state" role="status"><span className="dashboard-loader" /><p>Preparando indicadores de calificaciones...</p></div> : error ? <div className="dashboard-state is-error" role="alert"><AlertCircle size={24} /><p>{error}</p><button onClick={() => setRefresh((value) => value + 1)}>Reintentar</button></div> : <>
       <div className="grades-controls"><label>Periodo<select value={period} onChange={(event) => setPeriod(event.target.value)}>{data.periods.map((item) => <option key={item.id_bimestre} value={item.id_bimestre}>{item.nombre}</option>)}<option value="annual">Consolidado anual</option></select></label><label>Curso<select value={course} onChange={(event) => setCourse(event.target.value)}><option value="">Todos los cursos</option>{data.courses.map((item) => <option key={item.id_curso} value={item.id_curso}>{item.nombre}</option>)}</select></label></div>
       <p className="grades-explanation">{annual ? "El consolidado utiliza las notas finales registradas por competencia. La comparación reúne los resultados de cada bimestre." : "Los niveles de logro corresponden a las notas de competencias del bimestre seleccionado."}</p>
       {!metrics.hasGrades ? <div className="dashboard-state grades-empty"><ClipboardCheck size={28} /><p>Aún no se registraron calificaciones</p><small>{annual ? "Todavía no hay notas finales para esta selección. Puedes consultar los bimestres en la comparación anual." : "Para el bimestre y los filtros seleccionados."}</small></div> : <>

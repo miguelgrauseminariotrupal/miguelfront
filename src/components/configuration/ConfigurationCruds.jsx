@@ -1,5 +1,5 @@
 import { Pencil, Plus, RotateCcw, Search } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getAniosLectivos } from "../../services/aniosLectivos.service";
 import { getNiveles } from "../../services/niveles.service";
 import { getGrados } from "../../services/grados.service";
@@ -30,6 +30,7 @@ function StateField({ value, onChange }) {
 
 function CrudPanel({ initial, createValues, canOperate = true, showActions = true, autoShowResults = false, resultsTrigger = "", onEditItem, load, save, idOf, labelOf, columns, filters, renderFields, editValues, validate, noun }) {
   const [items, setItems] = useState([]);
+  const requestVersion = useRef(0);
   const [form, setForm] = useState(initial);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -44,12 +45,16 @@ function CrudPanel({ initial, createValues, canOperate = true, showActions = tru
     }
   }, [autoShowResults, resultsTrigger]);
   const refresh = useCallback(async () => {
+    const version = ++requestVersion.current;
     setLoading(true);
-    try { setItems(await load()); }
-    catch (error) { setFeedback({ error: error.message, success: "" }); }
-    finally { setLoading(false); }
+    try { const records = await load(); if (version === requestVersion.current) setItems(records); }
+    catch (error) { if (version === requestVersion.current) setFeedback({ error: error.message, success: "" }); }
+    finally { if (version === requestVersion.current) setLoading(false); }
   }, [load]);
-  useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => {
+    if (resultsVisible && canOperate) refresh(); else { setItems([]); setLoading(false); }
+    return () => { requestVersion.current++; };
+  }, [refresh, resultsVisible, canOperate]);
   const change = (event) => setForm((state) => ({ ...state, [event.target.name]: event.target.value }));
   const reset = () => { setForm(initial); setFormOpen(false); setResultsVisible(true); };
   const submit = async (event) => {

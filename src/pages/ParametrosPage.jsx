@@ -72,7 +72,6 @@ export default function ParametrosPage() {
       if (currentId) {
         setNivelForm((state) => state.idAnio ? state : { ...state, idAnio: currentId });
         setGradoForm((state) => state.idAnio ? state : { ...state, idAnio: currentId });
-        await Promise.all([loadNiveles(currentId), loadNiveles(currentId, "grados")]);
       }
     }
     catch (error) { setFeedback({ error: error.message, success: "" }); }
@@ -80,6 +79,11 @@ export default function ParametrosPage() {
   };
 
   useEffect(() => { loadAnios(); }, []);
+
+  useEffect(() => {
+    if (activeTab === "niveles" && nivelForm.idAnio) loadNiveles(nivelForm.idAnio);
+    if (activeTab === "grados" && gradoForm.idAnio) loadNiveles(gradoForm.idAnio, "grados");
+  }, [activeTab, nivelForm.idAnio, gradoForm.idAnio]);
 
   const selectTab = (tab) => {
     setActiveTab(tab);
@@ -100,13 +104,11 @@ export default function ParametrosPage() {
   const handleNivelAnio = (idAnio) => {
     setNivelForm({ id: "", idAnio, nombre: "" });
     setNiveles([]);
-    loadNiveles(idAnio);
   };
 
   const handleGradoAnio = (idAnio) => {
     setGradoForm({ id: "", idAnio, idNivel: "", nombre: "" });
     setNivelesGrado([]); setGrados([]);
-    loadNiveles(idAnio, "grados");
   };
 
   const handleGradoNivel = async (idNivel) => {

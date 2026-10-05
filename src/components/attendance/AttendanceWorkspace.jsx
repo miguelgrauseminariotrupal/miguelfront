@@ -1,6 +1,6 @@
 import { CalendarDays, ChevronLeft, ChevronRight, Users } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { getAlumno } from "../../services/alumnos.service";
+import { getAlumnos } from "../../services/alumnos.service";
 import { createAsistencia, getAsistencias, updateAsistencia } from "../../services/asistencias.service";
 import { getDocente } from "../../services/docentes.service";
 import { getMatriculas } from "../../services/matriculas.service";
@@ -51,7 +51,7 @@ export default function AttendanceWorkspace({ selection }) {
       .then(async (enrollments) => {
         const uniqueStudentIds = [...new Set(enrollments.map((item) => item.id_estudiante).filter(Boolean))];
         const [studentRecords, dailyAttendance, sectionPrograms] = await Promise.all([
-          Promise.all(uniqueStudentIds.map((id) => getAlumno(id, { signal: controller.signal }))),
+          getAlumnos({ signal: controller.signal }),
           getAsistencias({ fecha: selectedDate, signal: controller.signal }),
           getProgramacionSecciones({ id_seccion: sectionId, signal: controller.signal }),
         ]);
@@ -60,7 +60,8 @@ export default function AttendanceWorkspace({ selection }) {
           ? await getDocente(sectionProgram.id_docente_responsable, { signal: controller.signal })
           : null;
         const enrollmentByStudent = new Map(enrollments.map((item) => [String(item.id_estudiante), item]));
-        setStudents(studentRecords.map((student) => ({ ...student, enrollment: enrollmentByStudent.get(String(student.id_estudiante)) })).sort(compareStudents));
+        if (controller.signal.aborted) return;
+        setStudents(studentRecords.filter((student) => uniqueStudentIds.some((id) => String(id) === String(student.id_estudiante))).map((student) => ({ ...student, enrollment: enrollmentByStudent.get(String(student.id_estudiante)) })).sort(compareStudents));
         setResponsibleTeacher(teacher);
         const enrollmentIds = new Set(enrollments.map((item) => String(item.id_matricula)));
         const records = Object.fromEntries(dailyAttendance.filter((item) => enrollmentIds.has(String(item.id_matricula))).map((item) => [String(item.id_matricula), item]));

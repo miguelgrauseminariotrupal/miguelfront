@@ -1,6 +1,6 @@
 import { UserRound } from "lucide-react";
 import { useEffect, useState } from "react";
-import { getDocentes } from "../../services/docentes.service";
+import { getDocente } from "../../services/docentes.service";
 import { getProgramacionCursos } from "../../services/programacionCursos.service";
 import { createProgramacionSeccion, getProgramacionSecciones, updateProgramacionSeccion } from "../../services/programacionSecciones.service";
 import CourseAssignmentPanel from "./CourseAssignmentPanel";
@@ -11,7 +11,15 @@ export default function ResponsibleTeacherSection({ classRecord, onUpdated }) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [coursesOpen, setCoursesOpen] = useState(false);
   const [feedback, setFeedback] = useState({ type: "", message: "" });
-  useEffect(() => { getDocentes().then(setTeachers).catch(() => setFeedback({ type: "error", message: "No se pudieron cargar los docentes." })); }, []);
+  useEffect(() => {
+    setTeachers([]); setPickerOpen(false); setCoursesOpen(false);
+    if (!classRecord?.id_docente_responsable || classRecord.docente_responsable || classRecord.docente) return;
+    const controller = new AbortController();
+    getDocente(classRecord.id_docente_responsable, { signal: controller.signal })
+      .then((teacher) => { if (!controller.signal.aborted) setTeachers([teacher]); })
+      .catch((error) => { if (!controller.signal.aborted) setFeedback({ type: "error", message: error.message }); });
+    return () => controller.abort();
+  }, [classRecord]);
   const currentTeacher = classRecord?.docente_responsable || classRecord?.docente || teachers.find((item) => String(item.id_docente) === String(classRecord?.id_docente_responsable));
   const hasCurrentTeacher = Boolean(classRecord?.id_docente_responsable || currentTeacher?.id_docente);
   const assign = async (selected) => {
@@ -23,7 +31,7 @@ export default function ResponsibleTeacherSection({ classRecord, onUpdated }) {
       } else {
         await createProgramacionSeccion(classRecord.id_seccion, selected.id_docente, false);
       }
-      const records = await getProgramacionSecciones();
+      const records = await getProgramacionSecciones({ id_seccion: classRecord.id_seccion });
       const updated = records.find((item) => String(item.id_seccion) === String(classRecord.id_seccion));
       onUpdated?.({ ...classRecord, ...updated, docente_responsable: selected, id_docente_responsable: selected.id_docente });
       setFeedback({ type: "success", message: hasCurrentTeacher ? "Docente responsable actualizado correctamente." : "Docente responsable asignado correctamente." });

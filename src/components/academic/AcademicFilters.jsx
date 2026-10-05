@@ -9,7 +9,7 @@ function FieldMessage({ loading, error, enabled, items, emptyText }) {
 }
 
 export default function AcademicFilters({ onSelectionChange }) {
-  const { selection, lists, loading, errors, selectAnio, selectNivel, selectGrado, selectSeccion } = useAcademicFilters();
+  const { selection, lists, loading, errors, opened, openList, selectAnio, selectNivel, selectGrado, selectSeccion } = useAcademicFilters();
 
   useEffect(() => {
     onSelectionChange?.(selection);
@@ -28,29 +28,29 @@ export default function AcademicFilters({ onSelectionChange }) {
 
       <div className="academic-field">
         <label htmlFor="academic-level">Nivel</label>
-        <select id="academic-level" value={selection.nivel} onChange={(event) => selectNivel(event.target.value)} disabled={!selection.anio || loading.niveles || Boolean(errors.anios)}>
+        <select id="academic-level" onFocus={() => openList("niveles")} value={selection.nivel} onChange={(event) => selectNivel(event.target.value)} disabled={!selection.anio || loading.niveles || Boolean(errors.anios)}>
           <option value="">{loading.niveles ? "Cargando niveles..." : "Selecciona un nivel"}</option>
           {lists.niveles.map((item) => <option key={item.id_nivel} value={item.id_nivel}>{item.nombre}</option>)}
         </select>
-        <FieldMessage loading={loading.niveles} error={errors.niveles} enabled={Boolean(selection.anio)} items={lists.niveles} emptyText="No hay niveles para el año seleccionado." />
+        <FieldMessage loading={loading.niveles} error={errors.niveles} enabled={opened.niveles && Boolean(selection.anio)} items={lists.niveles} emptyText="No hay niveles para el año seleccionado." />
       </div>
 
       <div className="academic-field">
         <label htmlFor="academic-grade">Grado</label>
-        <select id="academic-grade" value={selection.grado} onChange={(event) => selectGrado(event.target.value)} disabled={!selection.nivel || loading.grados || Boolean(errors.niveles)}>
+        <select id="academic-grade" onFocus={() => openList("grados")} value={selection.grado} onChange={(event) => selectGrado(event.target.value)} disabled={!selection.nivel || loading.grados || Boolean(errors.niveles)}>
           <option value="">{loading.grados ? "Cargando grados..." : "Selecciona un grado"}</option>
           {lists.grados.map((item) => <option key={item.id_grado} value={item.id_grado}>{item.nombre}</option>)}
         </select>
-        <FieldMessage loading={loading.grados} error={errors.grados} enabled={Boolean(selection.nivel)} items={lists.grados} emptyText="No hay grados para el nivel seleccionado." />
+        <FieldMessage loading={loading.grados} error={errors.grados} enabled={opened.grados && Boolean(selection.nivel)} items={lists.grados} emptyText="No hay grados para el nivel seleccionado." />
       </div>
 
       <div className="academic-field">
         <label htmlFor="academic-section">Sección</label>
-        <select id="academic-section" value={selection.seccion} onChange={(event) => selectSeccion(event.target.value)} disabled={!selection.grado || loading.secciones || Boolean(errors.grados)}>
+        <select id="academic-section" onFocus={() => openList("secciones")} value={selection.seccion} onChange={(event) => selectSeccion(event.target.value)} disabled={!selection.grado || loading.secciones || Boolean(errors.grados)}>
           <option value="">{loading.secciones ? "Cargando secciones..." : "Selecciona una sección"}</option>
           {lists.secciones.map((item) => <option key={item.id_seccion} value={item.id_seccion}>{item.nombre}</option>)}
         </select>
-        <FieldMessage loading={loading.secciones} error={errors.secciones} enabled={Boolean(selection.grado)} items={lists.secciones} emptyText="No hay secciones para el grado seleccionado." />
+        <FieldMessage loading={loading.secciones} error={errors.secciones} enabled={opened.secciones && Boolean(selection.grado)} items={lists.secciones} emptyText="No hay secciones para el grado seleccionado." />
       </div>
     </section>
   );

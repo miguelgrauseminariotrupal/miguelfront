@@ -15,7 +15,7 @@ export default function CourseAssignmentPanel({ classRecord, onClose }) {
 
   useEffect(() => {
     const yearId = classRecord?.academic_context?.anio?.id_anio_lectivo;
-    Promise.all([getCursos(yearId), getProgramacionCursos(), getDocentes()]).then(([courses, assignments, teachers]) => {
+    Promise.all([getCursos(yearId), classRecord.id_programacion_seccion ? getProgramacionCursos({ id_programacion_seccion: classRecord.id_programacion_seccion }) : Promise.resolve([]), getDocentes()]).then(([courses, assignments, teachers]) => {
       const byTeacher = new Map(teachers.map((teacher) => [String(teacher.id_docente), teacher]));
       const existing = assignments.filter((item) => String(item.id_programacion_seccion) === String(classRecord.id_programacion_seccion));
       setRows(courses.map((course) => { const assignment = existing.find((item) => String(item.id_curso) === String(course.id_curso)); const defaultTeacher = classRecord.id_docente_responsable ? byTeacher.get(String(classRecord.id_docente_responsable)) : null; const teacher = assignment?.id_docente ? byTeacher.get(String(assignment.id_docente)) : defaultTeacher; return { course, assignment, selected: Boolean(assignment), teacher, defaultTeacher }; }));
