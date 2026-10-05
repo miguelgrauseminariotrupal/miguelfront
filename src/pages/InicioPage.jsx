@@ -2,6 +2,7 @@ import { AlertCircle, Bot, CalendarCheck, CheckCircle2, ChevronRight, ClipboardC
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import AcademicFilters from "../components/academic/AcademicFilters";
+import GradesDashboard from "../components/evaluations/GradesDashboard";
 import { getAsistencias } from "../services/asistencias.service";
 import { getMatriculas } from "../services/matriculas.service";
 import { getTiposAsistencia } from "../services/tiposAsistencia.service";
@@ -119,7 +120,7 @@ export default function InicioPage() {
       </button>
       <button type="button" className={selectedIndicator === "evaluations" ? "is-selected" : ""} onClick={() => setSelectedIndicator("evaluations")}>
         <span className="dashboard-option__icon dashboard-option__icon--evaluations"><ClipboardCheck size={24} /></span>
-        <span><strong>Dashboard Evaluaciones</strong><small>Consulta el progreso y rendimiento académico.</small></span>
+        <span><strong>Dashboard Calificaciones</strong><small>Consulta el progreso y rendimiento académico.</small></span>
         <ChevronRight size={19} />
       </button>
       <button type="button" className={selectedIndicator === "miguel" ? "is-selected" : ""} onClick={() => setSelectedIndicator("miguel")}>
@@ -167,11 +168,7 @@ export default function InicioPage() {
       </>}
     </section>}
 
-    {selectedIndicator === "evaluations" && <section className="home-option-card" aria-labelledby="evaluations-dashboard-title">
-      <span className="home-option-card__icon"><ClipboardCheck size={24} /></span>
-      <div><h2 id="evaluations-dashboard-title">Dashboard Evaluaciones</h2><p>Los indicadores de evaluaciones estarán disponibles cuando la API publique los endpoints de calificaciones.</p></div>
-      <Link to="/evaluaciones/calificaciones">Ir a calificaciones<ChevronRight size={17} /></Link>
-    </section>}
+    {selectedIndicator === "evaluations" && <GradesDashboard />}
 
     {selectedIndicator === "miguel" && <section className="home-option-card" aria-labelledby="miguel-dashboard-title">
       <span className="home-option-card__icon"><Bot size={24} /></span>

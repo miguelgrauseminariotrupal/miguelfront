@@ -1263,3 +1263,35 @@ img, svg { max-width: 100%; }
   .app-header,
   .page-content { width: 100%; }
 }
+.grades-refresh { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border: 1px solid var(--color-border); border-radius: 8px; background: white; color: var(--color-primary); cursor: pointer; }
+.grades-refresh:disabled { opacity: .5; cursor: wait; }
+.grades-controls { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 16px; }
+.grades-controls label { display: grid; gap: 6px; flex: 1; min-width: 180px; font-size: .75rem; color: var(--color-text-secondary); }
+.grades-controls select { padding: 10px 12px; border: 1px solid var(--color-border); border-radius: 8px; background: white; color: var(--color-text); font: inherit; }
+.grades-explanation { color: var(--color-text-secondary); font-size: .72rem; line-height: 1.6; margin: 14px 0; }
+.grades-panels { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 16px; margin-top: 16px; }
+.grades-distribution { display: grid; gap: 18px; margin-top: 22px; }
+.grades-distribution > div { display: flex; align-items: center; gap: 12px; }
+.grades-distribution strong { min-width: 85px; text-align: right; font-size: .8rem; }
+.grades-distribution small { color: var(--color-text-secondary); font-weight: 400; }
+.grades-bar { flex: 1; height: 12px; border-radius: 20px; background: #edf1f5; overflow: hidden; }
+.grades-bar > span { display: block; height: 100%; background: var(--color-primary); border-radius: inherit; transition: width .25s; }
+.grades-bar .grade-color--ad { background: #168345; }
+.grades-bar .grade-color--a { background: #3187d4; }
+.grades-bar .grade-color--b { background: #e0a323; }
+.grades-bar .grade-color--c { background: #d95353; }
+.grades-register { margin: 16px 0 0; }
+.grades-register > div { display: flex; justify-content: space-between; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--color-border); font-size: .8rem; }
+.grades-register dt { color: var(--color-text-secondary); }
+.grades-register dd { font-weight: 700; margin: 0; }
+.grades-comparison { margin-top: 20px; padding: 20px; border: 1px solid var(--color-border); border-radius: 12px; }
+.grades-table-scroll { overflow-x: auto; margin-top: 18px; }
+.grades-comparison table { width: 100%; border-collapse: collapse; text-align: left; font-size: .75rem; }
+.grades-comparison th, .grades-comparison td { padding: 13px 10px; border-bottom: 1px solid var(--color-border); white-space: nowrap; }
+.grades-comparison thead { color: var(--color-text-secondary); background: #f7f9fc; }
+.grades-comparison tr.is-selected { background: #edf5ff; }
+.grades-comparison button { padding: 0; border: 0; background: none; color: var(--color-primary); font: inherit; font-weight: 600; cursor: pointer; }
+.grades-empty { flex-direction: column; gap: 8px; }
+.grades-empty p { margin: 0; font-weight: 600; }
+.grades-empty small { color: var(--color-text-secondary); text-align: center; }
+@media (max-width: 760px) { .grades-panels { grid-template-columns: 1fr; } .grades-comparison { padding: 14px; } }

@@ -8,12 +8,8 @@ export async function getValoresEvaluacion({ signal } = {}) {
   return extractList(await apiGet("/valores-evaluacion", { params: { estado: true }, signal }));
 }
 
-export function getNotasBimestre({ id_matricula, id_curso, id_bimestre, signal }) {
-  return apiGet("/notas-bimestre", { params: { id_matricula, id_curso, id_bimestre }, signal });
-}
-
-export function getNotasFinales({ id_matricula, id_curso, signal }) {
-  return apiGet("/notas-finales", { params: { id_matricula, id_curso }, signal });
+export function getNotasMatriculaCurso({ id_matricula, id_curso, signal }) {
+  return apiGet("/notas-matricula-curso", { params: { id_matricula, id_curso }, signal });
 }
 
 export function generarPlantillasNotas(idAnio) {

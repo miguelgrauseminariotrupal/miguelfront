@@ -701,86 +701,128 @@ components:
         codigo: { type: string, example: "AD" }
         descripcion: { type: string, example: "Logro destacado" }
 
-    NotaFinalCapacidad:
+    NotaCompetenciaValor:
+      type: object
+      nullable: true
+      description: Null si no existe la fila de esa nota (plantilla no generada).
+      properties:
+        id_evaluacion_competencia: { type: integer }
+        id_valor: { type: integer, nullable: true }
+        valor: { $ref: '#/components/schemas/ValorEvaluacionResumen' }
+        observacion: { type: string, nullable: true }
+
+    NotaCapacidadValor:
       type: object
       properties:
         id_evaluacion_capacidad: { type: integer }
+        id_valor: { type: integer, nullable: true }
+        valor: { $ref: '#/components/schemas/ValorEvaluacionResumen' }
+
+    NotaCapacidadBimestre:
+      type: object
+      properties:
         id_capacidad: { type: integer }
-        codigo: { type: string, nullable: true }
-        id_valor: { type: integer, nullable: true }
-        valor: { $ref: '#/components/schemas/ValorEvaluacionResumen' }
-        estado: { type: boolean }
-
-    NotaFinalCompetencia:
-      type: object
-      properties:
-        id_evaluacion_competencia: { type: integer }
-        id_competencia: { type: integer }
-        codigo: { type: string, nullable: true }
-        observacion: { type: string, nullable: true }
-        id_valor: { type: integer, nullable: true }
-        valor: { $ref: '#/components/schemas/ValorEvaluacionResumen' }
-        estado: { type: boolean }
-        capacidades:
-          type: array
-          items: { $ref: '#/components/schemas/NotaFinalCapacidad' }
-
-    NotasFinalesResponse:
-      type: object
-      properties:
-        id_matricula: { type: integer }
-        id_curso: { type: integer }
-        id_matricula_curso: { type: integer }
-        competencias:
-          type: array
-          items: { $ref: '#/components/schemas/NotaFinalCompetencia' }
-      required: [id_matricula, id_curso, id_matricula_curso, competencias]
-
-    NotaBimestreCapacidad:
-      type: object
-      properties:
-        id_evaluacion_capacidad: { type: integer }
-        id_capacidad: { type: integer }
-        codigo: { type: string, nullable: true }
-        estado: { type: boolean }
-        id_valor: { type: integer, nullable: true }
-        valor: { $ref: '#/components/schemas/ValorEvaluacionResumen' }
-
-    NotaBimestreCompetencia:
-      type: object
-      properties:
-        id_evaluacion_competencia: { type: integer }
-        id_competencia: { type: integer }
-        codigo: { type: string, nullable: true }
-        observacion: { type: string, nullable: true }
-        estado: { type: boolean }
-        id_valor: { type: integer, nullable: true }
-        valor: { $ref: '#/components/schemas/ValorEvaluacionResumen' }
-        capacidades:
-          type: array
-          items: { $ref: '#/components/schemas/NotaBimestreCapacidad' }
+        descripcion: { type: string, nullable: true }
+        nota_bimestre: { $ref: '#/components/schemas/NotaCapacidadValor' }
 
     NotaBimestreGrupo:
       type: object
-      description: Un bimestre con todas las competencias/capacidades evaluadas en él.
+      description: Un bimestre dentro de una competencia.
       properties:
         id_bimestre: { type: integer }
-        numero: { type: integer }
-        nombre: { type: string }
-        competencias:
+        numero: { type: integer, nullable: true }
+        nombre: { type: string, nullable: true }
+        nota_bimestre: { $ref: '#/components/schemas/NotaCompetenciaValor' }
+        capacidades:
           type: array
-          items: { $ref: '#/components/schemas/NotaBimestreCompetencia' }
+          items: { $ref: '#/components/schemas/NotaCapacidadBimestre' }
 
-    NotasBimestreResponse:
+    NotaCompetenciaResumen:
+      type: object
+      properties:
+        id_competencia: { type: integer }
+        codigo: { type: string, nullable: true }
+        descripcion: { type: string, nullable: true }
+        tipo: { type: string, nullable: true }
+        nota_final: { $ref: '#/components/schemas/NotaCompetenciaValor' }
+        bimestres:
+          type: array
+          description: Ordenados por número de bimestre.
+          items: { $ref: '#/components/schemas/NotaBimestreGrupo' }
+
+    NotasMatriculaCursoResponse:
       type: object
       properties:
         id_matricula: { type: integer }
         id_curso: { type: integer }
         id_matricula_curso: { type: integer }
-        bimestres:
+        competencias:
           type: array
-          items: { $ref: '#/components/schemas/NotaBimestreGrupo' }
-      required: [id_matricula, id_curso, id_matricula_curso, bimestres]
+          items: { $ref: '#/components/schemas/NotaCompetenciaResumen' }
+      required: [id_matricula, id_curso, id_matricula_curso, competencias]
+
+    ActualizarNotaCompetenciaRequest:
+      type: object
+      properties:
+        id_evaluacion_competencia: { type: integer }
+        id_valor:
+          type: integer
+          nullable: true
+          description: id de mg_valor_evaluacion (activo). null limpia la nota.
+        observacion:
+          type: string
+          nullable: true
+          description: Opcional. Si se omite no se modifica; null la limpia.
+        id_bimestre:
+          type: integer
+          nullable: true
+          description: Opcional. Si se omite no se modifica; null = nota final.
+      required: [id_evaluacion_competencia, id_valor]
+
+    ActualizarNotaCapacidadRequest:
+      type: object
+      properties:
+        id_evaluacion_capacidad: { type: integer }
+        id_valor:
+          type: integer
+          nullable: true
+          description: id de mg_valor_evaluacion (activo). null limpia la nota.
+        observacion:
+          type: string
+          nullable: true
+          description: >
+            Opcional. Requiere la columna `observacion` en
+            mg_evaluacion_capacidades (hoy no existe en el esquema).
+        id_bimestre:
+          type: integer
+          nullable: true
+          description: Opcional. Si se omite no se modifica; null = nota final.
+      required: [id_evaluacion_capacidad, id_valor]
+
+    EvaluacionCompetencia:
+      type: object
+      description: Fila de mg_evaluacion_competencia.
+      properties:
+        id_evaluacion_competencia: { type: integer }
+        id_competencia: { type: integer }
+        id_valor: { type: integer, nullable: true }
+        id_matricula_curso: { type: integer }
+        id_bimestre: { type: integer, nullable: true, description: null = nota final }
+        codigo: { type: string, nullable: true }
+        observacion: { type: string, nullable: true }
+        estado: { type: boolean }
+
+    EvaluacionCapacidad:
+      type: object
+      description: Fila de mg_evaluacion_capacidades.
+      properties:
+        id_evaluacion_capacidad: { type: integer }
+        id_capacidad: { type: integer }
+        id_valor: { type: integer, nullable: true }
+        id_matricula_curso: { type: integer }
+        id_bimestre: { type: integer, nullable: true, description: null = nota final }
+        codigo: { type: string, nullable: true }
+        estado: { type: boolean }
 
     DocenteResponsableResponse:
       type: object
@@ -2348,50 +2390,84 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
 
-  /notas-finales:
-    get:
+  /nota-competencia:
+    put:
       tags: [Notas]
-      summary: Notas finales de un alumno en un curso
+      summary: Actualizar una nota de competencia
       description: >
-        Devuelve mg_evaluacion_competencia + mg_evaluacion_capacidades de la
-        matrícula de ese alumno en ese curso, agrupadas (cada competencia con
-        sus capacidades anidadas). 'id_valor'/'valor' vienen null si la nota
-        final todavía no se calculó/asignó.
-      parameters:
-        - name: id_matricula
-          in: query
-          required: true
-          schema: { type: integer }
-        - name: id_curso
-          in: query
-          required: true
-          schema: { type: integer }
+        Actualiza UNA fila de mg_evaluacion_competencia (la nota final o la
+        de un bimestre, según su `id_bimestre`). `id_evaluacion_competencia`
+        e `id_valor` son obligatorios (`id_valor: null` limpia la nota).
+        `observacion` e `id_bimestre` son opcionales: si se omiten no se
+        modifican. Con `id_bimestre` se mueve la fila a otro bimestre (o a
+        nota final con `null`); debe ser del año lectivo del curso y no
+        chocar con otra nota existente. También acepta PATCH.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ActualizarNotaCompetenciaRequest' }
       responses:
         '200':
-          description: Notas finales agrupadas por competencia
+          description: Fila actualizada
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/NotasFinalesResponse' }
+              schema: { $ref: '#/components/schemas/EvaluacionCompetencia' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '404':
-          description: No existe una matrícula de ese alumno en ese curso.
+          description: La nota de competencia o el bimestre no existen.
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '409': { $ref: '#/components/responses/Conflict' }
         '500': { $ref: '#/components/responses/ServerError' }
 
-  /notas-bimestre:
+  /nota-capacidad:
+    put:
+      tags: [Notas]
+      summary: Actualizar una nota de capacidad
+      description: >
+        Actualiza UNA fila de mg_evaluacion_capacidades (la nota final o la
+        de un bimestre, según su `id_bimestre`). `id_evaluacion_capacidad`
+        e `id_valor` son obligatorios (`id_valor: null` limpia la nota).
+        `observacion` e `id_bimestre` son opcionales: si se omiten no se
+        modifican. Con `id_bimestre` se mueve la fila a otro bimestre (o a
+        nota final con `null`); debe ser del año lectivo del curso y no
+        chocar con otra nota existente. `observacion` requiere que la tabla
+        tenga esa columna (hoy solo la tiene mg_evaluacion_competencia).
+        También acepta PATCH.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ActualizarNotaCapacidadRequest' }
+      responses:
+        '200':
+          description: Fila actualizada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EvaluacionCapacidad' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404':
+          description: La nota de capacidad o el bimestre no existen.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /notas-matricula-curso:
     get:
       tags: [Notas]
-      summary: Notas por bimestre de un alumno en un curso
+      summary: Todas las notas de un alumno en un curso
       description: >
-        Devuelve mg_evaluacion_competencia_bimestre +
-        mg_evaluacion_capacidades_bimestre de la matrícula de ese alumno en
-        ese curso, agrupadas por bimestre primero (bimestre -> competencias
-        -> capacidades) — a diferencia de /notas-finales, que agrupa por
-        competencia. `id_bimestre` es opcional: si se omite, trae todos los
-        bimestres con datos; si se envía, el arreglo `bimestres` queda
-        acotado a ese uno.
+        Una sola respuesta con, por competencia: la nota final y los
+        bimestres (cada uno con la nota de la competencia en ese bimestre y
+        las notas de sus capacidades). Sale de mg_evaluacion_competencia y
+        mg_evaluacion_capacidades, donde `id_bimestre` NULL es la nota final.
+        Una nota sin asignar viene con `id_valor`/`valor` en null; una
+        competencia solo aparece si tiene al menos una fila de evaluación.
+        Las notas finales de capacidades no se incluyen.
       parameters:
         - name: id_matricula
           in: query
@@ -2401,16 +2477,12 @@ paths:
           in: query
           required: true
           schema: { type: integer }
-        - name: id_bimestre
-          in: query
-          required: false
-          schema: { type: integer }
       responses:
         '200':
-          description: Notas por bimestre, agrupadas por bimestre
+          description: Notas de la matrícula en el curso
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/NotasBimestreResponse' }
+              schema: { $ref: '#/components/schemas/NotasMatriculaCursoResponse' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '404':
           description: No existe una matrícula de ese alumno en ese curso.
