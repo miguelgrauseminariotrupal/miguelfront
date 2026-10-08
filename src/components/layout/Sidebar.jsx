@@ -47,7 +47,7 @@ export default function Sidebar({ open, collapsed, onClose }) {
           {!attendanceOnly && <span className="nav-section__title">Principal</span>}
           {visiblePrimary.map((item) => <NavigationItem key={item.path} item={item} collapsed={collapsed} onClose={onClose} />)}
         </div>
-        {!attendanceOnly && <details className="nav-section nav-section--management" defaultOpen={isManagementRoute}>
+        {!attendanceOnly && <details className="nav-section nav-section--management" open={isManagementRoute}>
           <summary className="nav-section__title"><Settings2 size={15} /><span>Administración</span></summary>
           <div className="nav-section__items">{managementItems.map((item) => <NavigationItem key={item.path} item={item} collapsed={collapsed} onClose={onClose} />)}</div>
         </details>}
