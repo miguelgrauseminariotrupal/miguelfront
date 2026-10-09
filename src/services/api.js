@@ -35,12 +35,15 @@ export async function apiRequest(path, { method = "GET", params = {}, body, sign
   });
 
   let response;
+  let accessToken;
+  try { accessToken = JSON.parse(sessionStorage.getItem("miguel_session"))?.access_token; } catch { /* Sin sesión. */ }
   try {
     response = await fetch(url, {
       method,
       headers: {
         Accept: "application/json",
         ...(API_KEY ? { apikey: API_KEY } : {}),
+        ...(accessToken && normalizedPath !== "/login" ? { Authorization: `Bearer ${accessToken}` } : {}),
         ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
       },
       body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -81,7 +84,7 @@ export async function apiRequest(path, { method = "GET", params = {}, body, sign
       statusText: response.statusText,
       requestId: response.headers.get("sb-request-id") || response.headers.get("x-request-id") || "No proporcionado",
       response: rawResponse || "Respuesta vacía",
-      payload: body ?? null,
+      payload: normalizedPath.startsWith("/login") ? "[credenciales ocultas]" : body ?? null,
     };
     console.error("API request failed", details);
     throw new ApiError(message, { status: response.status, details });

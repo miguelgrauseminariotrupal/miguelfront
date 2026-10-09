@@ -7,6 +7,7 @@ export default function LoginPage() {
   const [values, setValues] = useState({ username: "", password: "" });
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -15,20 +16,27 @@ export default function LoginPage() {
     setErrors((current) => ({ ...current, [name]: "" }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
+    if (submitting) return;
     const nextErrors = { username: values.username.trim() ? "" : "Ingresa tu usuario.", password: values.password ? "" : "Ingresa tu contraseña." };
     setErrors(nextErrors);
     if (nextErrors.username || nextErrors.password) {
       document.getElementById(nextErrors.username ? "username" : "password")?.focus();
       return;
     }
-    const role = login(values.username, values.password);
-    if (!role) {
-      setErrors({ username: "Usuario o contraseña incorrectos.", password: "Usuario o contraseña incorrectos." });
-      return;
+    setSubmitting(true);
+    try {
+      const role = await login(values.username, values.password);
+      navigate(role === "asistencia" ? "/asistencia" : "/inicio", { replace: true });
+    } catch (error) {
+      const message = /API key|apikey/i.test(error.message)
+        ? "El servidor rechazó el acceso a la API. Revisa la configuración de autenticación del backend."
+        : error.status === 401 ? "Usuario o contraseña incorrectos, o cuenta inactiva." : error.message;
+      setErrors({ username: message });
+    } finally {
+      setSubmitting(false);
     }
-    navigate(role === "asistencia" ? "/asistencia" : "/inicio", { replace: true });
   };
 
   return (
@@ -57,7 +65,7 @@ export default function LoginPage() {
               <div className="input-wrap"><LockKeyhole /><input id="password" name="password" type={showPassword ? "text" : "password"} placeholder="Ingresa tu contraseña" autoComplete="current-password" value={values.password} onChange={handleChange} aria-invalid={Boolean(errors.password)} aria-describedby="password-error" /><button className="password-toggle" type="button" aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"} onClick={() => setShowPassword((value) => !value)}>{showPassword ? <EyeOff /> : <Eye />}</button></div>
               <p className="field__error" id="password-error" aria-live="polite">{errors.password}</p>
             </div>
-            <button className="submit-button" type="submit"><span>INGRESAR</span><ArrowRight /></button>
+            <button className="submit-button" type="submit" disabled={submitting}><span>{submitting ? "INGRESANDO…" : "INGRESAR"}</span><ArrowRight /></button>
           </form>
           <footer className="login-card__footer"><span /><p>I.E. Almirante Miguel Grau Seminario</p><span /></footer>
         </article>
