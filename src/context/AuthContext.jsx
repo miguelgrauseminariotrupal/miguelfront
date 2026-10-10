@@ -25,7 +25,9 @@ export function AuthProvider({ children }) {
     if (!userId || !accessToken) return;
     const controller = new AbortController();
     getUsuario(userId, { signal: controller.signal }).then(result => {
-      const profile = result?.usuario || result?.data || result;
+      const profile = result?.id_usuario != null ? result
+        : result?.usuario && typeof result.usuario === "object" ? result.usuario
+        : result?.data && typeof result.data === "object" ? result.data : null;
       if (controller.signal.aborted || String(profile?.id_usuario) !== String(userId)) return;
       const names = Object.fromEntries(["nombres", "apaterno", "amaterno"]
         .filter(key => Object.hasOwn(profile, key))
