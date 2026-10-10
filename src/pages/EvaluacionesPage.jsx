@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Check, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import useAcademicFilters from "../hooks/useAcademicFilters";
+import { useAuth } from "../context/AuthContext";
+import TeacherAttendance from "../components/attendance/TeacherAttendance";
 import { getCursos } from "../services/cursos.service";
 import { getDocentes } from "../services/docentes.service";
 import { getAlumnos } from "../services/alumnos.service";
@@ -17,8 +19,14 @@ function studentName(person = {}) { const surnames = [person.apellido_paterno, p
 function Grade({ value }) { return <span className={`evaluation-grade evaluation-grade--${String(value).toLowerCase()}`}>{value}</span>; }
 
 export default function EvaluacionesPage() {
+  const { role, docente } = useAuth();
+  return role === "admin" ? <EvaluacionesWorkspace /> : <TeacherAttendance docente={docente}>{selection => <EvaluacionesWorkspace assignedSelection={selection} />}</TeacherAttendance>;
+}
+
+function EvaluacionesWorkspace({ assignedSelection }) {
   const academic = useAcademicFilters();
-  const { selection, lists, loading: academicLoading, errors: academicErrors, openList, selectAnio, selectNivel, selectGrado, selectSeccion } = academic;
+  const { lists, loading: academicLoading, errors: academicErrors, openList, selectAnio, selectNivel, selectGrado, selectSeccion } = academic;
+  const selection = assignedSelection || academic.selection;
   const [courseId, setCourseId] = useState("");
   const [bimester, setBimester] = useState("");
   const [courses, setCourses] = useState([]);
@@ -171,15 +179,17 @@ export default function EvaluacionesPage() {
   return <main className="page-content evaluation-page">
     <div className="page-heading"><h2>Consulta de calificaciones</h2><p>Consulta las notas por bimestre y las notas finales de cada alumno.</p></div>
     <section className="evaluation-setup evaluation-setup--api" aria-label="Datos de evaluación">
+      {!assignedSelection && <>
       <label>Año lectivo<select value={selection.anio} disabled={academicLoading.anios} onChange={(e) => selectAnio(e.target.value)}><option value="">Seleccionar</option>{lists.anios.map((item) => <option key={item.id_anio_lectivo} value={item.id_anio_lectivo}>{item.anio}</option>)}</select></label>
       <label>Nivel<select onFocus={() => openList("niveles")} value={selection.nivel} disabled={!selection.anio || academicLoading.niveles} onChange={(e) => selectNivel(e.target.value)}><option value="">Seleccionar</option>{lists.niveles.map((item) => <option key={item.id_nivel} value={item.id_nivel}>{item.nombre}</option>)}</select></label>
       <label>Grado<select onFocus={() => openList("grados")} value={selection.grado} disabled={!selection.nivel || academicLoading.grados} onChange={(e) => selectGrado(e.target.value)}><option value="">Seleccionar</option>{lists.grados.map((item) => <option key={item.id_grado} value={item.id_grado}>{item.nombre}</option>)}</select></label>
       <label>Sección<select onFocus={() => openList("secciones")} value={selection.seccion} disabled={!selection.grado || academicLoading.secciones} onChange={(e) => selectSeccion(e.target.value)}><option value="">Seleccionar</option>{lists.secciones.map((item) => <option key={item.id_seccion} value={item.id_seccion}>{item.nombre}</option>)}</select></label>
+      </>}
       <label>Bimestre<select value={bimester} disabled={!selection.seccion || Boolean(catalogError)} onChange={(e) => setBimester(e.target.value)}><option value="">Seleccionar bimestre</option>{periods.map((period) => <option key={period.id_bimestre} value={period.id_bimestre}>{period.nombre}</option>)}<option value="final">Notas finales</option></select></label>
       <label>Curso<select value={courseId} disabled={!selection.seccion || busy} onChange={(e) => setCourseId(e.target.value)}><option value="">{busy ? "Cargando..." : "Seleccionar curso"}</option>{courses.map((item) => <option key={item.id_programacion_curso} value={item.id_programacion_curso}>{item.nombre}</option>)}</select></label>
       {selectedCourse && <div className="evaluation-teacher"><span>Docente responsable</span><strong>{teacher ? fullName(teacher) : "Sin docente asignado"}</strong></div>}
     </section>
-    <section className="evaluation-actions"><div><small>Prepara los registros vacíos de evaluación del año seleccionado.</small>{message && <p>{message}</p>}</div><button disabled={!selection.anio || generating || busy || Boolean(catalogError) || academicLoading.anios} onClick={generateTemplates}>{generating ? "Preparando..." : "Generar plantillas de notas"}</button></section>
+    {!assignedSelection && <section className="evaluation-actions"><div><small>Prepara los registros vacíos de evaluación del año seleccionado.</small>{message && <p>{message}</p>}</div><button disabled={!selection.anio || generating || busy || Boolean(catalogError) || academicLoading.anios} onClick={generateTemplates}>{generating ? "Preparando..." : "Generar plantillas de notas"}</button></section>}
     {(error || catalogError || academicError) && <p className="parameter-feedback is-error">{error || catalogError || academicError}</p>}
     {!selectedCourse ? <section className="evaluation-welcome"><span><ChevronRight size={20} /></span><div><strong>Completa la selección académica</strong><p>Los cursos programados para la sección aparecerán automáticamente.</p></div></section> : !bimester ? <section className="evaluation-welcome"><span><ChevronRight size={20} /></span><div><strong>Selecciona un bimestre</strong><p>Alumnos, competencias y capacidades se habilitarán para el periodo elegido.</p></div></section> : busy ? <section className="evaluation-welcome"><div><strong>Cargando registro...</strong><p>Consultando alumnos, competencias y capacidades.</p></div></section> : !competencies.length ? <section className="evaluation-welcome"><div><strong>Este curso no tiene competencias configuradas</strong><p>Regístralas primero desde Plan de evaluación.</p></div></section> : !students.length ? <section className="evaluation-welcome"><div><strong>No hay alumnos asignados a este curso</strong><p>Genera la asignación desde Matrícula → Asignar cursos.</p></div></section> : <>
       <section className="evaluation-group-progress"><span>Avance de alumnos consultados</span><strong>{groupCompleted} de {students.length} alumnos con notas en {bimester === "final" ? "competencias" : "capacidades y competencias"}</strong><div><span style={{ width: `${students.length ? Math.round(groupCompleted / students.length * 100) : 0}%` }} /></div></section>

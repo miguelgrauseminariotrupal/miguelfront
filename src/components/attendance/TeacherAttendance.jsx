@@ -6,7 +6,7 @@ import { getNivel } from "../../services/niveles.service";
 import { getAnioLectivo } from "../../services/aniosLectivos.service";
 import AttendanceWorkspace from "./AttendanceWorkspace";
 
-export default function TeacherAttendance({ docente }) {
+export default function TeacherAttendance({ docente, children }) {
   const [sections, setSections] = useState([]);
   const [selected, setSelected] = useState("");
   const [loading, setLoading] = useState(true);
@@ -66,6 +66,6 @@ export default function TeacherAttendance({ docente }) {
         </select>
       </div>
     </section>
-    {selection && <AttendanceWorkspace selection={selection} />}
+    {selection && (children ? children(selection) : <AttendanceWorkspace selection={selection} />)}
   </>;
 }

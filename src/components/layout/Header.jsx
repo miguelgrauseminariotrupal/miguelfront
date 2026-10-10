@@ -10,8 +10,8 @@ export default function Header({ onOpenMenu, navigationOpen }) {
   const menuRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout, user, docente } = useAuth();
-  const displayName = docente?.nombres || user?.usuario || "Usuario";
+  const { logout, userFullName } = useAuth();
+  const displayName = userFullName || "Usuario";
 
   useEffect(() => {
     const close = (event) => { if (!menuRef.current?.contains(event.target)) setMenuOpen(false); };
@@ -29,7 +29,7 @@ export default function Header({ onOpenMenu, navigationOpen }) {
       </div>
       <div className="user-menu" ref={menuRef}>
         <button className="user-menu__trigger" type="button" aria-expanded={menuOpen} onClick={() => setMenuOpen((value) => !value)}>
-          <span className="user-avatar">{displayName.charAt(0).toUpperCase()}</span><span className="user-name">{displayName}</span><ChevronDown size={16} />
+          <span className="user-avatar">{displayName.charAt(0).toUpperCase()}</span><span className="user-name" title={displayName}>{displayName}</span><ChevronDown size={16} />
         </button>
         {menuOpen && <div className="user-menu__dropdown"><button type="button" onClick={handleLogout}><LogOut size={17} />Cerrar sesión</button></div>}
       </div>

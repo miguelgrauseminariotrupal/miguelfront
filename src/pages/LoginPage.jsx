@@ -28,7 +28,7 @@ export default function LoginPage() {
     setSubmitting(true);
     try {
       const role = await login(values.username, values.password);
-      navigate(role === "asistencia" ? "/asistencia" : "/inicio", { replace: true });
+      navigate(role === "docente" ? "/asistencia" : "/inicio", { replace: true });
     } catch (error) {
       const message = /API key|apikey/i.test(error.message)
         ? "El servidor rechazó el acceso a la API. Revisa la configuración de autenticación del backend."

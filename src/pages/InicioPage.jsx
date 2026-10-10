@@ -6,6 +6,7 @@ import GradesDashboard from "../components/evaluations/GradesDashboard";
 import { getAsistencias } from "../services/asistencias.service";
 import { getMatriculas } from "../services/matriculas.service";
 import { getTiposAsistencia } from "../services/tiposAsistencia.service";
+import { useAuth } from "../context/AuthContext";
 
 const localDateValue = (date = new Date()) => [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"), String(date.getDate()).padStart(2, "0")].join("-");
 const normalizedCode = (value) => String(value || "").trim().toUpperCase();
@@ -27,6 +28,8 @@ function DashboardCard({ icon: Icon, label, value, tone, detail }) {
 }
 
 export default function InicioPage() {
+  const { user } = useAuth();
+  const greetingName = typeof user?.nombres === "string" ? user.nombres.trim() : "";
   const [selectedIndicator, setSelectedIndicator] = useState("");
   const [selection, setSelection] = useState({ anio: "", nivel: "", grado: "", seccion: "" });
   const [selectedDate, setSelectedDate] = useState(() => localDateValue());
@@ -108,7 +111,7 @@ export default function InicioPage() {
   return <main className="page-content home-page">
     <header className="dashboard-welcome">
       <span>Centro de información</span>
-      <h1>Todo lo importante, en un solo lugar</h1>
+      <h1>{greetingName ? `Hola, ${greetingName}` : "Hola"}</h1>
       <p>Selecciona una opción para consultar indicadores y conocer el estado de la gestión académica.</p>
     </header>
 

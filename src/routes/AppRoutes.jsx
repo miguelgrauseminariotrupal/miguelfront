@@ -27,7 +27,7 @@ function AdminRoute({ children }) {
 
 function PublicRoute() {
   const { isAuthenticated, role } = useAuth();
-  return isAuthenticated ? <Navigate to={role === "asistencia" ? "/asistencia" : "/inicio"} replace /> : <LoginPage />;
+  return isAuthenticated ? <Navigate to={role === "docente" ? "/asistencia" : "/inicio"} replace /> : <LoginPage />;
 }
 
 export default function AppRoutes() {
@@ -36,10 +36,10 @@ export default function AppRoutes() {
       <Route path="/login" element={<PublicRoute />} />
       <Route element={<PrivateRoute />}>
         <Route path="/inicio" element={<AdminRoute><InicioPage /></AdminRoute>} />
-        <Route path="/agente-miguel" element={<AdminRoute><AgenteMiguelPage /></AdminRoute>} />
+        <Route path="/agente-miguel" element={<AgenteMiguelPage />} />
         <Route path="/asistencia" element={<AsistenciaPage />} />
-        <Route path="/evaluaciones" element={<AdminRoute><Navigate to="/evaluaciones/calificaciones" replace /></AdminRoute>} />
-        <Route path="/evaluaciones/calificaciones" element={<AdminRoute><EvaluacionesPage /></AdminRoute>} />
+        <Route path="/evaluaciones" element={<Navigate to="/evaluaciones/calificaciones" replace />} />
+        <Route path="/evaluaciones/calificaciones" element={<EvaluacionesPage />} />
         <Route path="/evaluaciones/configuracion" element={<AdminRoute><EvaluacionesConfiguracionPage /></AdminRoute>} />
         <Route path="/configuracion" element={<AdminRoute><ParametrosPage /></AdminRoute>} />
         <Route path="/docentes" element={<AdminRoute><DocentesPage /></AdminRoute>} />

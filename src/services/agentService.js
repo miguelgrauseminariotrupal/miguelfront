@@ -14,7 +14,11 @@ export const agentTransport = new DefaultChatTransport({
     return { body: { id, message } };
   },
   fetch: async (url, options) => {
-    const response = await fetch(url, options);
+    let accessToken;
+    try { accessToken = JSON.parse(sessionStorage.getItem("miguel_session"))?.access_token; } catch { /* Sin sesión. */ }
+    const headers = new Headers(options?.headers);
+    if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
+    const response = await fetch(url, { ...options, headers });
     if (!response.ok) {
       const body = await response.json().catch(() => null);
       throw new Error(body?.error || 'No se pudo conectar con Agente Miguel.');

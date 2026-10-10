@@ -30,8 +30,8 @@ function NavigationItem({ item, collapsed, onClose }) {
 export default function Sidebar({ open, collapsed, onClose }) {
   const { role } = useAuth();
   const location = useLocation();
-  const attendanceOnly = role === "asistencia";
-  const visiblePrimary = attendanceOnly ? primaryItems.filter((item) => item.path === "/asistencia") : primaryItems;
+  const teacherOnly = role !== "admin";
+  const visiblePrimary = teacherOnly ? primaryItems.filter((item) => item.path !== "/inicio") : primaryItems;
   const isManagementRoute = managementItems.some((item) => item.path === location.pathname);
 
   return <>
@@ -44,10 +44,10 @@ export default function Sidebar({ open, collapsed, onClose }) {
       </div>
       <nav className="sidebar__nav">
         <div className="nav-section">
-          {!attendanceOnly && <span className="nav-section__title">Principal</span>}
+          <span className="nav-section__title">Principal</span>
           {visiblePrimary.map((item) => <NavigationItem key={item.path} item={item} collapsed={collapsed} onClose={onClose} />)}
         </div>
-        {!attendanceOnly && <details className="nav-section nav-section--management" open={isManagementRoute}>
+        {!teacherOnly && <details className="nav-section nav-section--management" open={isManagementRoute}>
           <summary className="nav-section__title"><Settings2 size={15} /><span>Administración</span></summary>
           <div className="nav-section__items">{managementItems.map((item) => <NavigationItem key={item.path} item={item} collapsed={collapsed} onClose={onClose} />)}</div>
         </details>}
