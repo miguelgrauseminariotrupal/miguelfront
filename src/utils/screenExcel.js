@@ -8,7 +8,7 @@ export function exportVisible(element) {
   }
   return true;
 }
-const visibleNodes = (root, selector) => [...(root.matches?.(selector) ? [root] : []), ...root.querySelectorAll(selector)].filter(exportVisible);
+const visibleNodes = (root, selector) => [...(root.matches?.(selector) ? [root] : []), ...root.querySelectorAll(selector)].filter(element => exportVisible(element) && !element.closest(".agent-page, .agent-message, .agent-markdown, .chat-artifact"));
 function valueOf(element) {
   const select = element.querySelector("select");
   if (select) return text(select.selectedOptions?.[0] || select.options?.[select.selectedIndex] || select.querySelector("option[selected]")) || select.value || "";
@@ -17,7 +17,7 @@ function valueOf(element) {
 }
 
 export function screenReports(root, title) {
-  if (!root) return [];
+  if (!root || root.closest?.(".agent-page, .agent-message, .agent-markdown, .chat-artifact")) return [];
   const reports = [];
   const add = (name, columns, rows) => { if (rows.length) reports.push({ title: name, columns: columns.map(label => ({ label, key: label })), rows }); };
   for (const [index, table] of visibleNodes(root, "table").entries()) {
@@ -44,29 +44,14 @@ export function screenReports(root, title) {
   const student = text(screen.querySelector(".evaluation-current-student strong"));
   add("Competencias", ["Alumno", "Competencia", "Nivel de logro", "Observación"], visibleNodes(root, ".competency-card").map(card => [student, text(card.querySelector(".competency-card__heading > span:nth-child(2) strong")), valueOf(card.querySelector(".competency-achievement") || card), card.querySelector("textarea")?.value || ""]));
   add("Capacidades", ["Alumno", "Competencia", "Capacidad", "Calificación"], visibleNodes(root, ".capacity-row").map(row => [student, text(row.closest(".competency-card")?.querySelector(".competency-card__heading > span:nth-child(2) strong")), text(row.querySelector("strong")), text(row.querySelector(".score-options .is-selected")) || "Sin nota"]));
-  add("Conversación", ["Autor", "Mensaje"], visibleNodes(root, ".agent-message").map(message => [message.classList.contains("agent-message-user") ? "Usuario" : "Miguel", [...message.querySelectorAll(".agent-markdown")].map(text).join("\n")]).filter(([, message]) => message));
   add("Plan de evaluación", ["Tipo", "Descripción"], visibleNodes(root, ".tree-row, .mobile-academic-row").map(row => {
     const type = row.classList.contains("tree-row--capacity") ? "Capacidad" : row.classList.contains("tree-row--competency") ? "Competencia" : "Elemento";
     const clone = row.cloneNode(true);
     clone.querySelectorAll("svg, .context-menu, .context-menu-trigger").forEach(node => node.remove());
     return [type, text(clone)];
   }));
-  const indicators = visibleNodes(root, ".attendance-kpi, .grades-kpi, .attendance-coverage__row, .grades-register > div, .grades-distribution > div");
-  add("Indicadores", ["Indicador", "Información"], indicators.map(row => [text(row.querySelector("small, dt") || row.querySelector("span")), text(row.querySelector("strong, dd"))]));
-  const structured = "table, .student-attendance-row, .enrollment-list, .management-list, .student-roster__list, .competency-card, .agent-message, .tree-row, .mobile-academic-row, .attendance-kpi, .grades-kpi, .attendance-coverage__row, .grades-register, .grades-distribution";
-  const ignored = "button, svg, nav, form, [role=tablist], .parameter-empty, .inline-empty, .evaluation-welcome, .dashboard-state, .agent-empty, .agent-composer-wrap, .parameter-feedback, .screen-excel, [data-export-ignore]";
-  // Captura los bloques informativos que no pertenecen a una tabla o listado.
-  const information = visibleNodes(root, "p, dl, .evaluation-context, .evaluation-teacher, .attendance-responsible-teacher, .attendance-panel-title, .dashboard-card, .evaluation-group-progress, .evaluation-current-student, .evaluation-progress, .generation-progress, .tree-learning-heading, .current-teacher, .teacher-selection").filter(element => !element.closest(`${structured}, ${ignored}`) && !/^(no hay|no se encontraron|cargando|selecciona|completa la selección)/i.test(text(element)));
-  const topInformation = information.filter(element => !information.some(parent => parent !== element && parent.contains(element)));
-  add("Contenido", ["Información"], topInformation.map(element => [text(element)]).filter(([value]) => value));
-  if (!reports.length) return [];
-  const context = visibleNodes(screen, "label").filter(label => !label.closest("form, .competency-list, .agent-composer-wrap, .chat-report-formats")).map(label => {
-    const control = label.querySelector("select, input");
-    if (!control || control.type === "password" || control.type === "search" || !control.value) return null;
-    const clone = label.cloneNode(true); clone.querySelectorAll("select, input, svg").forEach(node => node.remove());
-    return [text(clone) || control.getAttribute("aria-label") || "Filtro", valueOf(label)];
-  }).filter(Boolean);
-  return [{ title: "Contexto", columns: [{ label: "Campo" }, { label: "Valor" }], rows: [["Pantalla", title], ["Fecha de descarga", new Date().toLocaleString("es-PE", { timeZone: "America/Lima" })], ["Alcance", "Información cargada y visible. Puede incluir cambios pendientes de guardar."], ...context] }, ...reports];
+  add("Resumen de calificaciones", ["Indicador", "Valor"], visibleNodes(root, ".grades-register > div, .grades-distribution > div").map(row => [text(row.querySelector("dt, span")), text(row.querySelector("dd, strong"))]));
+  return reports;
 }
 
 export async function screenWorkbook(reports) {

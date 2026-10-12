@@ -9,21 +9,20 @@ test("creates individual targets for each loaded table and list", () => {
   const root = document.querySelector("main");
   assert.deepEqual(exportBlocks(root).map(element => element.id), ["a", "b"]);
   const scope = document.querySelector("#a");
-  assert.deepEqual(screenReports(scope, "Tabla")[1].rows, [["Ana"]]);
+  assert.deepEqual(screenReports(scope, "Tabla")[0].rows, [["Ana"]]);
   scope.querySelector("td").textContent = "Resultado actualizado";
-  assert.deepEqual(screenReports(scope, "Tabla")[1].rows, [["Resultado actualizado"]]);
+  assert.deepEqual(screenReports(scope, "Tabla")[0].rows, [["Resultado actualizado"]]);
   const slot = document.createElement("div"); slot.setAttribute("data-export-ignore", ""); slot.textContent = "Descargar Excel";
   scope.after(slot);
   assert.deepEqual(exportBlocks(root).map(element => element.id), ["a", "b"]);
 });
 
-test("informational content exports alongside tables and scoped cards", () => {
-  const { document } = parseHTML('<main><section><p>Sección A: 25 estudiantes</p><table><thead><tr><th>Alumno</th></tr></thead><tbody><tr><td>Ana</td></tr></tbody></table></section><div class="current-teacher"><small>Docente responsable actual</small><strong>Juan Perez</strong></div></main>');
+test("excludes descriptive content and standalone teacher details", () => {
+  const { document } = parseHTML('<main><section><p>25 estudiantes</p><table><thead><tr><th>Alumno</th></tr></thead><tbody><tr><td>Ana</td></tr></tbody></table></section><div class="current-teacher"><strong>Juan Perez</strong></div></main>');
   const root = document.querySelector("main");
-  const result = screenReports(root, "Pantalla");
-  assert.ok(result.find(report => report.title === "Contenido").rows.some(row => row[0].includes("25 estudiantes")));
-  const scope = document.querySelector(".current-teacher");
-  assert.ok(screenReports(scope, "Docente")[1].rows[0][0].includes("Juan Perez"));
+  assert.equal(screenReports(root, "Pantalla").length, 1);
+  assert.deepEqual(screenReports(document.querySelector(".current-teacher"), "Docente"), []);
+  assert.equal(exportBlocks(root).length, 1);
 });
 
 test("hidden and empty results are not downloadable targets", () => {
@@ -31,9 +30,16 @@ test("hidden and empty results are not downloadable targets", () => {
   assert.deepEqual(exportBlocks(document.querySelector("main")), []);
 });
 
+test("chat tables and ordinary conversations never get automatic downloads", () => {
+  const { document } = parseHTML('<main class="agent-page"><article class="agent-message"><p>Respuesta normal</p><table><thead><tr><th>Alumno</th></tr></thead><tbody><tr><td>Ana</td></tr></tbody></table></article></main>');
+  const root = document.querySelector("main");
+  assert.deepEqual(exportBlocks(root), []);
+  assert.deepEqual(screenReports(root, "Chat"), []);
+});
+
 test("exports every loaded report row even when the preview is shorter", () => {
   const { document } = parseHTML('<main><table><thead><tr><th>Alumno</th></tr></thead><tbody><tr><td>Ana</td></tr></tbody></table></main>');
   const table = document.querySelector("table");
   table.setAttribute("data-export-rows", JSON.stringify([["Ana"], ["Luis"], ["Maria"]]));
-  assert.equal(screenReports(table, "Reporte")[1].rows.length, 3);
+  assert.equal(screenReports(table, "Reporte")[0].rows.length, 3);
 });

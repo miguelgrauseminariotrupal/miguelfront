@@ -68,3 +68,7 @@ Si no se envía el formato, el frontend lo reconoce en la última consulta del u
 Todas las descargas incluyen todas las filas. PDF organiza los registros con cada campo identificado y agrega páginas automáticamente; Word contiene una tabla. Estos formatos exportan la tabla recibida, no generan información ni resúmenes adicionales. Las bibliotecas se cargan al descargar.
 
 Como alternativa para el backend actual, si una respuesta completa contiene tablas Markdown y el usuario pidió un reporte o formato de archivo, el frontend muestra tarjetas de descarga para esas tablas. Exporta solo el contenido recibido; no genera datos a partir de una negativa del chatbot. No duplica tarjetas si ya se recibió una herramienta de reporte. El backend debería evitar decir que el usuario tiene que copiar y pegar: debe enviar la tabla o invocar la herramienta correspondiente.
+
+Las herramientas de reporte también muestran la descarga únicamente cuando la consulta del usuario solicita un reporte o exportación. El chatbot no tiene botón general de Excel ni descargas automáticas por cada mensaje o tabla de una respuesta normal.
+
+En los demás módulos, los botones por bloque y el botón de cabecera exportan únicamente tablas y listas de datos. No se exportan textos descriptivos, conversaciones, paneles informativos ni hojas adicionales con el contenido completo de la pantalla.

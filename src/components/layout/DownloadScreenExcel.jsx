@@ -14,7 +14,7 @@ export default function DownloadScreenExcel({ scope, title: blockTitle, label = 
       const root = scope || document.querySelector(".app-shell__main main");
       const title = blockTitle || document.querySelector(".app-header h1")?.textContent || "Reporte";
       const reports = screenReports(root, title);
-      if (!reports.length) { setFeedback({ route: location.pathname, text: "Carga o consulta información en esta pantalla antes de descargar." }); return; }
+      if (!reports.length) { setFeedback({ route: location.pathname, text: "No hay tablas o listas de datos cargadas para descargar." }); return; }
       const content = await screenWorkbook(reports);
       const url = URL.createObjectURL(new Blob([content], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
       const link = document.createElement("a");
@@ -26,5 +26,5 @@ export default function DownloadScreenExcel({ scope, title: blockTitle, label = 
     } catch { setFeedback({ route: location.pathname, text: "No se pudo generar el Excel. Intenta nuevamente." }); }
     finally { setBusy(false); }
   }
-  return <div className="screen-excel" data-export-ignore><button className="screen-excel-button" type="button" disabled={busy} onClick={download} title={scope ? "Descargar todos los resultados cargados en este bloque" : "Descargar toda la información cargada en esta pantalla"}><Download size={16} /><span>{busy ? "Preparando…" : label}</span></button>{feedback?.route === location.pathname && <div className="screen-excel-feedback" role="status">{feedback.text}<button type="button" aria-label="Cerrar aviso de descarga" onClick={() => setFeedback(null)}>×</button></div>}</div>;
+  return <div className="screen-excel" data-export-ignore><button className="screen-excel-button" type="button" disabled={busy} onClick={download} title={scope ? "Descargar esta tabla o lista de datos" : "Descargar las tablas y listas de datos cargadas"}><Download size={16} /><span>{busy ? "Preparando…" : label}</span></button>{feedback?.route === location.pathname && <div className="screen-excel-feedback" role="status">{feedback.text}<button type="button" aria-label="Cerrar aviso de descarga" onClick={() => setFeedback(null)}>×</button></div>}</div>;
 }

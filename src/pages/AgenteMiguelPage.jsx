@@ -52,7 +52,7 @@ function MessagePart({ part, prompt, allowTableExport, complete }) {
   const done = ["output-available", "output-error"].includes(part.state);
   const error = part.state === "output-error" || Boolean(part.output?.error);
   if (part.state === "output-available" && !error) {
-    if (["exportar_excel", "generar_reporte", "exportar_reporte", "exportar_pdf", "exportar_word", "exportar_csv"].includes(name)) return <ChatArtifact kind="report" output={{ ...part.output, ...(name === "exportar_pdf" ? { formato: "pdf" } : name === "exportar_word" ? { formato: "docx" } : name === "exportar_csv" ? { formato: "csv" } : {}) }} prompt={prompt} />;
+    if (asksForReport(prompt) && ["exportar_excel", "generar_reporte", "exportar_reporte", "exportar_pdf", "exportar_word", "exportar_csv"].includes(name)) return <ChatArtifact kind="report" output={{ ...part.output, ...(name === "exportar_pdf" ? { formato: "pdf" } : name === "exportar_word" ? { formato: "docx" } : name === "exportar_csv" ? { formato: "csv" } : {}) }} prompt={prompt} />;
     if (["generar_grafico", "crear_grafico", "mostrar_grafico", "graficar"].includes(name)) return <ChatArtifact kind="chart" output={part.output} prompt={prompt} />;
   }
   return <div className={`agent-tool${error ? " agent-tool-error" : ""}`} role="status">
