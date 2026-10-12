@@ -31,7 +31,7 @@ export default function Sidebar({ open, collapsed, onClose }) {
   const { role } = useAuth();
   const location = useLocation();
   const teacherOnly = role !== "admin";
-  const visiblePrimary = teacherOnly ? primaryItems.filter((item) => item.path !== "/inicio") : primaryItems;
+  const visiblePrimary = primaryItems;
   const isManagementRoute = managementItems.some((item) => item.path === location.pathname);
 
   return <>

@@ -22,12 +22,12 @@ function PrivateRoute() {
 
 function AdminRoute({ children }) {
   const { role } = useAuth();
-  return role === "admin" ? children : <Navigate to="/asistencia" replace />;
+  return role === "admin" ? children : <Navigate to="/inicio" replace />;
 }
 
 function PublicRoute() {
-  const { isAuthenticated, role } = useAuth();
-  return isAuthenticated ? <Navigate to={role === "docente" ? "/asistencia" : "/inicio"} replace /> : <LoginPage />;
+  const { isAuthenticated } = useAuth();
+  return isAuthenticated ? <Navigate to="/inicio" replace /> : <LoginPage />;
 }
 
 export default function AppRoutes() {
@@ -35,7 +35,7 @@ export default function AppRoutes() {
     <Routes>
       <Route path="/login" element={<PublicRoute />} />
       <Route element={<PrivateRoute />}>
-        <Route path="/inicio" element={<AdminRoute><InicioPage /></AdminRoute>} />
+        <Route path="/inicio" element={<InicioPage />} />
         <Route path="/agente-miguel" element={<AgenteMiguelPage />} />
         <Route path="/asistencia" element={<AsistenciaPage />} />
         <Route path="/evaluaciones" element={<Navigate to="/evaluaciones/calificaciones" replace />} />

@@ -1,0 +1,11 @@
+.home-attendance-primary { display: flex; align-items: center; gap: 18px; margin: 24px 0; padding: 24px; border-radius: 16px; background: linear-gradient(110deg, #174e83, #227db0); color: white; text-decoration: none; box-shadow: 0 8px 24px #174e831a; }
+.home-attendance-primary-icon { display: grid; place-items: center; width: 58px; height: 58px; background: #ffffff20; border-radius: 14px; flex-shrink: 0; }
+.home-attendance-primary > span:nth-child(2) { display: grid; gap: 6px; flex: 1; }
+.home-attendance-primary strong { font-size: 20px; }
+.home-attendance-primary small { font-size: 13px; line-height: 1.5; color: #e5f3ff; }
+.home-attendance-primary:hover { background: linear-gradient(110deg, #123e6a, #1d6d9b); }
+.home-page > .academic-filters { margin-top: 20px; }
+.agent-teacher-content { display: flex; flex: 1; flex-direction: column; min-width: 0; min-height: 0; }
+.agent-teacher-content > .academic-filters { margin: 12px 20px 0; padding: 10px 14px; }
+.agent-section-context { margin: 8px 0; font-size: 13px; color: #47637c; }
+@media (max-width: 600px) { .home-attendance-primary { gap: 12px; padding: 18px; } .home-attendance-primary strong { font-size: 17px; } .home-attendance-primary-icon { width: 46px; height: 46px; } .agent-teacher-content > .academic-filters { margin-inline: 12px; } }

@@ -6,6 +6,9 @@ import GradesDashboard from "../components/evaluations/GradesDashboard";
 import { getAsistencias } from "../services/asistencias.service";
 import { getMatriculas } from "../services/matriculas.service";
 import { getTiposAsistencia } from "../services/tiposAsistencia.service";
+import TeacherAttendance from "../components/attendance/TeacherAttendance";
+import "./inicio.css";
+import { sectionEnrollments } from "../utils/sectionContext";
 import { useAuth } from "../context/AuthContext";
 
 const localDateValue = (date = new Date()) => [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"), String(date.getDate()).padStart(2, "0")].join("-");
@@ -28,10 +31,26 @@ function DashboardCard({ icon: Icon, label, value, tone, detail }) {
 }
 
 export default function InicioPage() {
-  const { user } = useAuth();
-  const greetingName = typeof user?.nombres === "string" ? user.nombres.trim() : "";
-  const [selectedIndicator, setSelectedIndicator] = useState("");
-  const [selection, setSelection] = useState({ anio: "", nivel: "", grado: "", seccion: "" });
+  const { role, docente, userFullName } = useAuth();
+  return <main className="page-content home-page">
+    <header className="dashboard-welcome">
+      <span>Tu espacio de cada día</span>
+      <h1>{userFullName ? `Hola, ${userFullName}` : "Hola"}</h1>
+      <p>Cada pequeño avance cuenta. Tu dedicación de hoy abre oportunidades para tus estudiantes.</p>
+    </header>
+    <Link className="home-attendance-primary" to="/asistencia">
+      <span className="home-attendance-primary-icon"><CalendarCheck size={28} /></span>
+      <span><strong>Tomar asistencia aquí</strong><small>Empieza el día registrando la asistencia de tus estudiantes.</small></span>
+      <ChevronRight size={23} />
+    </Link>
+    {role === "docente" ? <TeacherAttendance docente={docente}>{selection => <HomeIndicators key={selection.seccion} assignedSelection={selection} />}</TeacherAttendance> : <HomeIndicators />}
+  </main>;
+}
+
+function HomeIndicators({ assignedSelection }) {
+  const [selectedIndicator, setSelectedIndicator] = useState(assignedSelection ? "daily-attendance" : "");
+  const [academicSelection, setSelection] = useState({ anio: "", nivel: "", grado: "", seccion: "" });
+  const selection = assignedSelection || academicSelection;
   const [selectedDate, setSelectedDate] = useState(() => localDateValue());
   const [enrollments, setEnrollments] = useState([]);
   const [attendance, setAttendance] = useState([]);
@@ -62,12 +81,14 @@ export default function InicioPage() {
 
     Promise.all([
       getMatriculas(filters),
-      getAsistencias({ fecha: selectedDate, signal: controller.signal }),
+      getAsistencias({ fecha: selectedDate, ...(selection.seccion ? { id_seccion: selection.seccion } : {}), signal: controller.signal }),
       getTiposAsistencia({ estado: true, signal: controller.signal }),
     ])
       .then(([enrollmentRecords, attendanceRecords, typeRecords]) => {
-        const enrollmentIds = new Set(enrollmentRecords.map((item) => String(item.id_matricula)));
-        setEnrollments(enrollmentRecords);
+        if (controller.signal.aborted) return;
+        const scoped = sectionEnrollments(enrollmentRecords, selection);
+        const enrollmentIds = new Set(scoped.map((item) => String(item.id_matricula)));
+        setEnrollments(scoped);
         setAttendance(attendanceRecords.filter((item) => enrollmentIds.has(String(item.id_matricula))));
         setAttendanceTypes(typeRecords);
       })
@@ -108,13 +129,7 @@ export default function InicioPage() {
     { label: "Justificados", value: metrics.justified, tone: "justified" },
   ].map((item) => ({ ...item, percentage: metrics.total ? Math.min(Math.round((item.value / metrics.total) * 100), 100) : 0 }));
 
-  return <main className="page-content home-page">
-    <header className="dashboard-welcome">
-      <span>Centro de información</span>
-      <h1>{greetingName ? `Hola, ${greetingName}` : "Hola"}</h1>
-      <p>Selecciona una opción para consultar indicadores y conocer el estado de la gestión académica.</p>
-    </header>
-
+  return <div className="home-indicators">
     <section className="dashboard-options" aria-label="Opciones del panel">
       <button type="button" className={selectedIndicator === "daily-attendance" ? "is-selected" : ""} onClick={() => setSelectedIndicator("daily-attendance")}>
         <span className="dashboard-option__icon dashboard-option__icon--attendance"><CalendarCheck size={24} /></span>
@@ -138,7 +153,7 @@ export default function InicioPage() {
         <div><span>Panel de asistencia</span><h3 id="daily-dashboard-title">{formattedDate}</h3></div>
         <label><span>Fecha</span><input type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value || localDateValue())} /></label>
       </div>
-      <AcademicFilters onSelectionChange={handleSelection} />
+      {!assignedSelection && <AcademicFilters onSelectionChange={handleSelection} />}
 
       {!selection.anio && <div className="dashboard-state"><CalendarCheck size={24} /><p>Selecciona un año lectivo para cargar el resumen.</p></div>}
       {selection.anio && loading && <div className="dashboard-state" role="status"><span className="dashboard-loader" /><p>Calculando indicadores del día...</p></div>}
@@ -171,12 +186,12 @@ export default function InicioPage() {
       </>}
     </section>}
 
-    {selectedIndicator === "evaluations" && <GradesDashboard />}
+    {selectedIndicator === "evaluations" && <GradesDashboard assignedSelection={assignedSelection} />}
 
     {selectedIndicator === "miguel" && <section className="home-option-card" aria-labelledby="miguel-dashboard-title">
       <span className="home-option-card__icon"><Bot size={24} /></span>
       <div><h2 id="miguel-dashboard-title">Hola, soy Miguel</h2><p>Consúltame para obtener más indicadores e información sobre la gestión académica.</p></div>
-      <Link to="/agente-miguel">Consultar a Miguel<ChevronRight size={17} /></Link>
+      <Link to="/agente-miguel" state={assignedSelection ? { academicSelection: assignedSelection } : undefined}>Consultar a Miguel<ChevronRight size={17} /></Link>
     </section>}
-  </main>;
+  </div>;
 }

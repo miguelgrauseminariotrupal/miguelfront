@@ -9,6 +9,7 @@ import { getCursos } from "../../services/cursos.service";
 import { getBimestres, getNotasMatriculaCurso, getValoresEvaluacion } from "../../services/notas.service";
 import { createLazyRecords } from "../../utils/lazyRecords";
 import { summarizeGrades } from "../../utils/gradeDashboard";
+import { sectionEnrollments } from "../../utils/sectionContext";
 
 async function mapLimited(items, task, signal) {
   const results = new Array(items.length);
@@ -23,8 +24,9 @@ function Metric({ icon: Icon, label, value, detail, tone = "total" }) {
   return <article className={`attendance-kpi attendance-kpi--${tone}`}><span className="attendance-kpi__icon"><Icon size={20} /></span><span><small>{label}</small><strong>{value}</strong><em>{detail}</em></span></article>;
 }
 
-export default function GradesDashboard() {
-  const [selection, setSelection] = useState({ anio: "", nivel: "", grado: "", seccion: "" });
+export default function GradesDashboard({ assignedSelection }) {
+  const [academicSelection, setSelection] = useState({ anio: "", nivel: "", grado: "", seccion: "" });
+  const selection = assignedSelection || academicSelection;
   const onSelection = useCallback((value) => setSelection(value), []);
   const [data, setData] = useState({ periods: [], scale: [], courses: [], records: [], students: 0 });
   const [period, setPeriod] = useState("");
@@ -49,7 +51,8 @@ export default function GradesDashboard() {
         getMatriculaCursos({ estado: true, signal }), getProgramacionCursos({ estado: true, signal }),
         getCursos(selection.anio, { estado: true, signal }), getBimestres(selection.anio, { signal }), getValoresEvaluacion({ signal }),
       ]);
-      const enrollmentMap = new Map(enrollments.map((item) => [String(item.id_matricula), item]));
+      const scoped = sectionEnrollments(enrollments, selection);
+      const enrollmentMap = new Map(scoped.map((item) => [String(item.id_matricula), item]));
       const programMap = new Map(programs.map((item) => [String(item.id_programacion_curso), item]));
       const courseIds = new Set(courses.map((item) => String(item.id_curso)));
       const uniquePairs = new Map();
@@ -61,7 +64,7 @@ export default function GradesDashboard() {
       const availableCourses = courses.filter((item) => [...uniquePairs.values()].some((pair) => String(pair.id_curso) === String(item.id_curso)));
       if (signal.aborted) return;
       const sortedPeriods = [...periods].sort((a, b) => a.numero - b.numero);
-      setData({ periods: sortedPeriods, scale, courses: availableCourses, records: [], students: new Set(enrollments.map((item) => String(item.id_estudiante))).size });
+      setData({ periods: sortedPeriods, scale, courses: availableCourses, records: [], students: new Set(scoped.map((item) => String(item.id_estudiante))).size });
       setPairs([...uniquePairs.values()]);
       setCourse(String(availableCourses[0]?.id_curso || ""));
       setPeriod(String(sortedPeriods[0]?.id_bimestre || "annual"));
@@ -94,7 +97,7 @@ export default function GradesDashboard() {
 
   return <section className="daily-dashboard grades-dashboard" aria-labelledby="evaluations-dashboard-title">
     <div className="daily-dashboard__heading"><div><span>Rendimiento académico</span><h3 id="evaluations-dashboard-title">Dashboard de calificaciones</h3></div><button className="grades-refresh" onClick={() => setRefresh((value) => value + 1)} disabled={loading || !selection.anio}><RefreshCw size={16} />Actualizar</button></div>
-    <AcademicFilters onSelectionChange={onSelection} />
+    {!assignedSelection && <AcademicFilters onSelectionChange={onSelection} />}
     {!selection.anio ? <div className="dashboard-state"><ClipboardCheck size={24} /><p>Selecciona un año lectivo para consultar las calificaciones.</p></div> : loading || notesLoading ? <div className="dashboard-state" role="status"><span className="dashboard-loader" /><p>Preparando indicadores de calificaciones...</p></div> : error ? <div className="dashboard-state is-error" role="alert"><AlertCircle size={24} /><p>{error}</p><button onClick={() => setRefresh((value) => value + 1)}>Reintentar</button></div> : <>
       <div className="grades-controls"><label>Periodo<select value={period} onChange={(event) => setPeriod(event.target.value)}>{data.periods.map((item) => <option key={item.id_bimestre} value={item.id_bimestre}>{item.nombre}</option>)}<option value="annual">Consolidado anual</option></select></label><label>Curso<select value={course} onChange={(event) => setCourse(event.target.value)}><option value="">Todos los cursos</option>{data.courses.map((item) => <option key={item.id_curso} value={item.id_curso}>{item.nombre}</option>)}</select></label></div>
       <p className="grades-explanation">{annual ? "El consolidado utiliza las notas finales registradas por competencia. La comparación reúne los resultados de cada bimestre." : "Los niveles de logro corresponden a las notas de competencias del bimestre seleccionado."}</p>

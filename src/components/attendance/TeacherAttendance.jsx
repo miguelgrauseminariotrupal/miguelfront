@@ -6,7 +6,7 @@ import { getNivel } from "../../services/niveles.service";
 import { getAnioLectivo } from "../../services/aniosLectivos.service";
 import AttendanceWorkspace from "./AttendanceWorkspace";
 
-export default function TeacherAttendance({ docente, children }) {
+export default function TeacherAttendance({ docente, children, initialSection }) {
   const [sections, setSections] = useState([]);
   const [selected, setSelected] = useState("");
   const [loading, setLoading] = useState(true);
@@ -42,7 +42,10 @@ export default function TeacherAttendance({ docente, children }) {
       if (controller.signal.aborted) return;
       const assigned = records.filter(Boolean).sort((a, b) => b.year - a.year || a.label.localeCompare(b.label, "es"));
       setSections(assigned);
-      setSelected(assigned[0]?.seccion || "");
+      let remembered;
+      try { remembered = sessionStorage.getItem(`miguel_teacher_section_${teacherId}`); } catch { /* Sin almacenamiento. */ }
+      const preferred = String(initialSection || remembered || "");
+      setSelected(assigned.find(item => item.seccion === preferred)?.seccion || assigned[0]?.seccion || "");
     }
     load().catch(err => {
       if (!controller.signal.aborted) setError(err.message || "No se pudo cargar tu sección asignada.");
@@ -50,7 +53,12 @@ export default function TeacherAttendance({ docente, children }) {
       if (!controller.signal.aborted) setLoading(false);
     });
     return () => controller.abort();
-  }, [teacherId]);
+  }, [teacherId, initialSection]);
+
+  useEffect(() => {
+    if (!teacherId || !selected) return;
+    try { sessionStorage.setItem(`miguel_teacher_section_${teacherId}`, selected); } catch { /* La selección sigue disponible en memoria. */ }
+  }, [teacherId, selected]);
 
   if (loading) return <p role="status">Cargando tu sección asignada…</p>;
   if (error) return <p role="alert">{error}</p>;

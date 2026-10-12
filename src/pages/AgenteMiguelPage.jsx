@@ -8,6 +8,10 @@ import { agentTransport } from "../services/agentService";
 import ChatArtifact from "../components/ChatArtifact";
 import { saveChatMessages } from "../utils/chatHistory";
 import { markdownReports, asksForReport } from "../utils/markdownReport";
+import { useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import TeacherAttendance from "../components/attendance/TeacherAttendance";
+import { sectionPrompt } from "../utils/sectionContext";
 
 const STORAGE_KEY = "miguel_agent_chats";
 const LABELS = {
@@ -60,7 +64,7 @@ function MessagePart({ part, prompt, allowTableExport, complete }) {
     {LABELS[name] || "Consultando información académica"}{error ? ": no se pudo consultar" : done ? " · Listo" : "…"}
   </div>;
 }
-function Conversation({ conversation, onSave }) {
+function Conversation({ conversation, onSave, assignedSelection }) {
   const [input, setInput] = useState("");
   const bottom = useRef(null);
   const textarea = useRef(null);
@@ -81,11 +85,12 @@ function Conversation({ conversation, onSave }) {
   useEffect(() => () => { stop(); }, [stop]);
   const send = (text) => {
     if (!text.trim() || busy) return;
-    sendMessage({ text: text.trim() });
+    sendMessage({ text: sectionPrompt(text.trim(), assignedSelection) });
     setInput("");
   };
   return <section className={`chat-area agent-conversation${!messages.length ? " is-empty" : ""}`} aria-label="Conversación con Agente Miguel" aria-busy={busy}>
     <div className="agent-messages" role="log" aria-label="Mensajes">
+      {assignedSelection && <p className="agent-section-context">Consultando tu sección: {assignedSelection.label}</p>}
       {!messages.length && <div className="agent-empty">
         <span className="agent-empty-mark"><Bot size={30} strokeWidth={1.5} aria-hidden="true" /></span>
         <span className="agent-eyebrow">Menos búsquedas. Más respuestas.</span>
@@ -119,6 +124,8 @@ function Conversation({ conversation, onSave }) {
 }
 
 export default function AgenteMiguelPage() {
+  const { role, docente } = useAuth();
+  const location = useLocation();
   const [chats, setChats] = useState(loadChats);
   const [activeId, setActiveId] = useState(() => chats[0].id);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -152,7 +159,7 @@ export default function AgenteMiguelPage() {
         }} title={chat.title}><MessageSquare size={15} aria-hidden="true" /><span>{chat.title}</span></button>)}</nav>
         <p>Conversaciones de esta sesión</p>
       </aside>
-      <Conversation key={active.id} conversation={active} onSave={save} />
+      {role === "docente" ? <div className="agent-teacher-content"><TeacherAttendance docente={docente} initialSection={location.state?.academicSelection?.seccion}>{selection => <Conversation key={`${active.id}-${selection.seccion}`} conversation={active} onSave={save} assignedSelection={selection} />}</TeacherAttendance></div> : <Conversation key={active.id} conversation={active} onSave={save} />}
     </div>
   </main>;
 }
