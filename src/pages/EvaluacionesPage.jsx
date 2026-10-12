@@ -12,7 +12,7 @@ import { getProgramacionSecciones } from "../services/programacionSecciones.serv
 import { getProgramacionCursos } from "../services/programacionCursos.service";
 import { getCompetencias } from "../services/competencias.service";
 import { getCapacidades } from "../services/capacidades.service";
-import { getBimestres, getValoresEvaluacion, getNotasMatriculaCurso, generarPlantillasNotas } from "../services/notas.service";
+import { getBimestres, getValoresEvaluacion, getNotasMatriculaCurso, generarPlantillasNotas, actualizarNotaCompetencia, actualizarNotaCapacidad } from "../services/notas.service";
 
 function fullName(person = {}) { return [person.nombres, person.apellido_paterno, person.apellido_materno].filter(Boolean).join(" "); }
 function studentName(person = {}) { const surnames = [person.apellido_paterno, person.apellido_materno].filter(Boolean).join(" "); return [surnames, person.nombres].filter(Boolean).join(", ").toLocaleUpperCase("es"); }
@@ -44,7 +44,10 @@ function EvaluacionesWorkspace({ assignedSelection }) {
   const [open, setOpen] = useState([]);
   const [search, setSearch] = useState("");
   const [message, setMessage] = useState("");
-  const finalized = true;
+  const [saving, setSaving] = useState(false);
+  const [dirty, setDirty] = useState({});
+  const finalized = saving;
+  const hasChanges = Object.keys(dirty).length > 0;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [catalogError, setCatalogError] = useState("");
@@ -58,7 +61,7 @@ function EvaluacionesWorkspace({ assignedSelection }) {
   const total = keys.length;
   const percentage = total ? Math.round((completed / total) * 100) : 0;
   const competencyLevel = (competency) => scores[`level-${competency.id_competencia}`] || "—";
-  const suggestedLevel = competencyLevel;
+
   useEffect(() => {
     setPeriods([]); setScale([]); setBimester(""); setCatalogError("");
     if (!selection.anio) return;
@@ -135,15 +138,18 @@ function EvaluacionesWorkspace({ assignedSelection }) {
     getNotasMatriculaCurso({ id_matricula: student.id_matricula, id_curso: selectedCourse.id_curso, signal: controller.signal })
       .then((response) => {
         if (controller.signal.aborted) return;
-        const values = {};
+        const values = { noteIds: {} };
         const code = (note) => note?.valor?.codigo || scale.find((value) => note?.id_valor != null && String(value.id_valor) === String(note.id_valor))?.codigo || "";
         (response.competencias || []).forEach((competency) => {
           const period = competency.bimestres?.find((item) => String(item.id_bimestre) === String(bimester));
           const note = bimester === "final" ? competency.nota_final : period?.nota_bimestre;
+          values.noteIds[`level-${competency.id_competencia}`] = note?.id_evaluacion_competencia;
+          values.noteIds[`comment-${competency.id_competencia}`] = note?.id_evaluacion_competencia;
           values[`level-${competency.id_competencia}`] = code(note);
           values[`comment-${competency.id_competencia}`] = note?.observacion || "";
           if (bimester !== "final") {
             (period?.capacidades || []).forEach((capacity) => {
+              values.noteIds[`capacity-${capacity.id_capacidad}`] = capacity.nota_bimestre?.id_evaluacion_capacidad;
               values[`capacity-${capacity.id_capacidad}`] = code(capacity.nota_bimestre);
             });
           }
@@ -153,6 +159,43 @@ function EvaluacionesWorkspace({ assignedSelection }) {
       .catch((requestError) => { if (!controller.signal.aborted) setError(requestError.message); });
     return () => controller.abort();
   }, [busy, student, studentId, selectedCourse, bimester, scale, records]);
+
+  function updateScore(key, value) {
+    setRecords((current) => ({ ...current, [studentId]: { ...current[studentId], [key]: value } }));
+    const field = key.startsWith("comment-") ? key.replace("comment-", "level-") : key;
+    setDirty((current) => ({ ...current, [studentId + ":" + field]: { studentId, field } }));
+    setMessage("");
+  }
+  async function saveChanges() {
+    setSaving(true); setError(""); setMessage("");
+    let saved = 0;
+    try {
+      for (const [key, change] of Object.entries(dirty)) {
+        const record = records[change.studentId];
+        const id = record.noteIds?.[change.field];
+        if (!id) throw new Error("Falta la plantilla de esta nota. Genera las plantillas del año antes de calificar.");
+        const grade = record[change.field];
+        const value = grade ? scale.find((item) => item.codigo === grade)?.id_valor : null;
+        if (grade && value == null) throw new Error("La calificación no corresponde a la escala disponible.");
+        if (change.field.startsWith("capacity-")) {
+          await actualizarNotaCapacidad({ id_evaluacion_capacidad: id, id_valor: value });
+        } else {
+          await actualizarNotaCompetencia({ id_evaluacion_competencia: id, id_valor: value, observacion: record[change.field.replace("level-", "comment-")] || null });
+        }
+        saved += 1;
+        setDirty((current) => { const next = { ...current }; delete next[key]; return next; });
+      }
+      setMessage("Cambios guardados. Puedes volver a corregir las notas cuando lo necesites.");
+    } catch (err) {
+      setError((saved ? saved + " notas guardadas. " : "") + err.message + " Los cambios pendientes se conservan para reintentar.");
+    } finally { setSaving(false); }
+  }
+  useEffect(() => {
+    if (!hasChanges) return;
+    const warn = (event) => { event.preventDefault(); event.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [hasChanges]);
 
   async function generateTemplates() {
     setGenerating(true); setMessage(""); setError("");
@@ -177,27 +220,27 @@ function EvaluacionesWorkspace({ assignedSelection }) {
   const academicError = Object.values(academicErrors).find(Boolean);
 
   return <main className="page-content evaluation-page">
-    <div className="page-heading"><h2>Consulta de calificaciones</h2><p>Consulta las notas por bimestre y las notas finales de cada alumno.</p></div>
+    <div className="page-heading"><h2>Registro de calificaciones</h2><p>Registra y corrige las notas por bimestre y las notas finales de cada alumno.</p></div>
     <section className="evaluation-setup evaluation-setup--api" aria-label="Datos de evaluación">
       {!assignedSelection && <>
-      <label>Año lectivo<select value={selection.anio} disabled={academicLoading.anios} onChange={(e) => selectAnio(e.target.value)}><option value="">Seleccionar</option>{lists.anios.map((item) => <option key={item.id_anio_lectivo} value={item.id_anio_lectivo}>{item.anio}</option>)}</select></label>
-      <label>Nivel<select onFocus={() => openList("niveles")} value={selection.nivel} disabled={!selection.anio || academicLoading.niveles} onChange={(e) => selectNivel(e.target.value)}><option value="">Seleccionar</option>{lists.niveles.map((item) => <option key={item.id_nivel} value={item.id_nivel}>{item.nombre}</option>)}</select></label>
-      <label>Grado<select onFocus={() => openList("grados")} value={selection.grado} disabled={!selection.nivel || academicLoading.grados} onChange={(e) => selectGrado(e.target.value)}><option value="">Seleccionar</option>{lists.grados.map((item) => <option key={item.id_grado} value={item.id_grado}>{item.nombre}</option>)}</select></label>
-      <label>Sección<select onFocus={() => openList("secciones")} value={selection.seccion} disabled={!selection.grado || academicLoading.secciones} onChange={(e) => selectSeccion(e.target.value)}><option value="">Seleccionar</option>{lists.secciones.map((item) => <option key={item.id_seccion} value={item.id_seccion}>{item.nombre}</option>)}</select></label>
+      <label>Año lectivo<select value={selection.anio} disabled={hasChanges || saving || academicLoading.anios} onChange={(e) => selectAnio(e.target.value)}><option value="">Seleccionar</option>{lists.anios.map((item) => <option key={item.id_anio_lectivo} value={item.id_anio_lectivo}>{item.anio}</option>)}</select></label>
+      <label>Nivel<select onFocus={() => openList("niveles")} value={selection.nivel} disabled={hasChanges || saving || !selection.anio || academicLoading.niveles} onChange={(e) => selectNivel(e.target.value)}><option value="">Seleccionar</option>{lists.niveles.map((item) => <option key={item.id_nivel} value={item.id_nivel}>{item.nombre}</option>)}</select></label>
+      <label>Grado<select onFocus={() => openList("grados")} value={selection.grado} disabled={hasChanges || saving || !selection.nivel || academicLoading.grados} onChange={(e) => selectGrado(e.target.value)}><option value="">Seleccionar</option>{lists.grados.map((item) => <option key={item.id_grado} value={item.id_grado}>{item.nombre}</option>)}</select></label>
+      <label>Sección<select onFocus={() => openList("secciones")} value={selection.seccion} disabled={hasChanges || saving || !selection.grado || academicLoading.secciones} onChange={(e) => selectSeccion(e.target.value)}><option value="">Seleccionar</option>{lists.secciones.map((item) => <option key={item.id_seccion} value={item.id_seccion}>{item.nombre}</option>)}</select></label>
       </>}
-      <label>Bimestre<select value={bimester} disabled={!selection.seccion || Boolean(catalogError)} onChange={(e) => setBimester(e.target.value)}><option value="">Seleccionar bimestre</option>{periods.map((period) => <option key={period.id_bimestre} value={period.id_bimestre}>{period.nombre}</option>)}<option value="final">Notas finales</option></select></label>
-      <label>Curso<select value={courseId} disabled={!selection.seccion || busy} onChange={(e) => setCourseId(e.target.value)}><option value="">{busy ? "Cargando..." : "Seleccionar curso"}</option>{courses.map((item) => <option key={item.id_programacion_curso} value={item.id_programacion_curso}>{item.nombre}</option>)}</select></label>
+      <label>Bimestre<select value={bimester} disabled={hasChanges || saving || !selection.seccion || Boolean(catalogError)} onChange={(e) => setBimester(e.target.value)}><option value="">Seleccionar bimestre</option>{periods.map((period) => <option key={period.id_bimestre} value={period.id_bimestre}>{period.nombre}</option>)}<option value="final">Notas finales</option></select></label>
+      <label>Curso<select value={courseId} disabled={hasChanges || saving || !selection.seccion || busy} onChange={(e) => setCourseId(e.target.value)}><option value="">{busy ? "Cargando..." : "Seleccionar curso"}</option>{courses.map((item) => <option key={item.id_programacion_curso} value={item.id_programacion_curso}>{item.nombre}</option>)}</select></label>
       {selectedCourse && <div className="evaluation-teacher"><span>Docente responsable</span><strong>{teacher ? fullName(teacher) : "Sin docente asignado"}</strong></div>}
     </section>
-    {!assignedSelection && <section className="evaluation-actions"><div><small>Prepara los registros vacíos de evaluación del año seleccionado.</small>{message && <p>{message}</p>}</div><button disabled={!selection.anio || generating || busy || Boolean(catalogError) || academicLoading.anios} onClick={generateTemplates}>{generating ? "Preparando..." : "Generar plantillas de notas"}</button></section>}
+    {!assignedSelection && <section className="evaluation-actions"><div><small>Prepara los registros vacíos de evaluación del año seleccionado.</small>{message && <p>{message}</p>}</div><button disabled={hasChanges || saving || !selection.anio || generating || busy || Boolean(catalogError) || academicLoading.anios} onClick={generateTemplates}>{generating ? "Preparando..." : "Generar plantillas de notas"}</button></section>}
     {(error || catalogError || academicError) && <p className="parameter-feedback is-error">{error || catalogError || academicError}</p>}
     {!selectedCourse ? <section className="evaluation-welcome"><span><ChevronRight size={20} /></span><div><strong>Completa la selección académica</strong><p>Los cursos programados para la sección aparecerán automáticamente.</p></div></section> : !bimester ? <section className="evaluation-welcome"><span><ChevronRight size={20} /></span><div><strong>Selecciona un bimestre</strong><p>Alumnos, competencias y capacidades se habilitarán para el periodo elegido.</p></div></section> : busy ? <section className="evaluation-welcome"><div><strong>Cargando registro...</strong><p>Consultando alumnos, competencias y capacidades.</p></div></section> : !competencies.length ? <section className="evaluation-welcome"><div><strong>Este curso no tiene competencias configuradas</strong><p>Regístralas primero desde Plan de evaluación.</p></div></section> : !students.length ? <section className="evaluation-welcome"><div><strong>No hay alumnos asignados a este curso</strong><p>Genera la asignación desde Matrícula → Asignar cursos.</p></div></section> : <>
       <section className="evaluation-group-progress"><span>Avance de alumnos consultados</span><strong>{groupCompleted} de {students.length} alumnos con notas en {bimester === "final" ? "competencias" : "capacidades y competencias"}</strong><div><span style={{ width: `${students.length ? Math.round(groupCompleted / students.length * 100) : 0}%` }} /></div></section>
       <div className="evaluation-workspace"><aside className="student-roster"><div className="student-roster__heading"><div><strong>Alumnos</strong><span>{students.length} matriculados en el curso</span></div><span>{groupCompleted}/{students.length}</span></div><label className="student-roster__search"><Search size={15} /><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar alumno" /></label><div className="student-roster__list">{visibleStudents.map((item) => { const name = studentName(item); const state = studentState(item.id_estudiante); return <button className={String(studentId) === String(item.id_estudiante) ? "is-active" : ""} onClick={() => setStudentId(String(item.id_estudiante))} key={item.id_estudiante}><span className="student-roster__avatar">{name.split(" ").slice(0, 2).map((part) => part[0]).join("")}</span><span><strong>{name}</strong><small className={state.final ? "is-complete" : state.count ? "is-progress" : ""}>{state.status}{state.count > 0 && !state.final ? ` · ${state.count}/${total}` : ""}</small></span>{state.final ? <CheckCircle2 size={16} /> : <span className="student-roster__number">{students.indexOf(item) + 1}</span>}</button>; })}</div></aside>
       <div className="evaluation-student-panel"><section className="evaluation-toolbar"><div className="evaluation-current-student"><span>Alumno {studentIndex + 1} de {students.length}</span><strong>{studentName(student)}</strong><div><button disabled={studentIndex <= 0} onClick={() => moveStudent(-1)} aria-label="Alumno anterior"><ChevronLeft size={16} /></button><button disabled={studentIndex >= students.length - 1} onClick={() => moveStudent(1)} aria-label="Alumno siguiente"><ChevronRight size={16} /></button></div></div><div className="evaluation-progress"><div><span>Avance</span><strong>{completed} de {total} {bimester === "final" ? "competencias" : "capacidades"}</strong></div><div className="evaluation-progress__track"><span style={{ width: `${percentage}%` }} /></div><small>{percentage}% completado</small></div><div className="evaluation-result"><span>Consulta</span><strong>{bimester === "final" ? "Notas finales" : periods.find((period) => String(period.id_bimestre) === String(bimester))?.nombre}</strong></div></section>
-      <div className="evaluation-hint"><span>Escala</span>{scale.map((item) => item.codigo).map((item) => <Grade key={item} value={item} />)}<small>{Object.hasOwn(records, studentId) ? "Consulta de notas registradas en el servidor." : error ? "No se pudieron cargar las notas." : "Cargando notas del alumno..."}</small></div>
-      <section className="competency-list">{competencies.map((competency, index) => { const id = String(competency.id_competencia); const isOpen = open.includes(id); const complete = Boolean(scores[`level-${competency.id_competencia}`]) && (bimester === "final" || competency.capacitiesLoaded && competency.capacities.every((capacity) => scores[`capacity-${capacity.id_capacidad}`])); return <article className={`competency-card ${isOpen ? "is-open" : ""}`} key={id}><div className="competency-card__heading" role="button" tabIndex={0} onClick={() => setOpen((current) => isOpen ? current.filter((item) => item !== id) : [...current, id])} onKeyDown={(event) => { if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) event.currentTarget.click(); }}><span className="competency-card__number">{index + 1}</span><span><small>{competency.codigo || `Competencia ${index + 1}`}</small><strong>{competency.descripcion}</strong></span>{complete && <span className="competency-complete"><Check size={13} /> Completa</span>}<label className="competency-achievement" onClick={(event) => event.stopPropagation()}><small>Nivel de logro <em>Registrado en el servidor</em></small><select disabled={finalized || suggestedLevel(competency) === "—"} value={competencyLevel(competency) === "—" ? "" : competencyLevel(competency)} ><option value="" disabled>—</option>{scale.map((item) => item.codigo).map((value) => <option key={value}>{value}</option>)}</select></label>{isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}</div>{isOpen && <div className="capacity-table">{bimester === "final" ? <p>Las notas finales se consultan por competencia.</p> : <>{!competency.capacitiesLoaded && <p>Cargando capacidades...</p>}<div className="capacity-table__head"><span>Capacidad</span><span>Calificación</span></div>{competency.capacities.map((capacity, capacityIndex) => { const key = `capacity-${capacity.id_capacidad}`; return <div className="capacity-row" key={capacity.id_capacidad}><div><small>Capacidad {capacityIndex + 1}</small><strong>{capacity.descripcion}</strong></div><div className="score-options">{scale.map((item) => item.codigo).map((value) => <button disabled={finalized} aria-label={`${capacity.descripcion}: ${value}`} className={scores[key] === value ? "is-selected" : ""}  key={value}>{value}</button>)}</div></div>; })}</>}<label className="competency-conclusion"><span>Conclusión descriptiva <small>Opcional</small></span><textarea disabled={finalized} value={scores[`comment-${id}`] || ""}  placeholder="Escribe una observación sobre el desempeño del alumno en esta competencia..." maxLength={500} /><small>{(scores[`comment-${id}`] || "").length}/500</small></label></div>}</article>; })}</section>
-      <footer className="evaluation-actions"><small>Consulta de calificaciones almacenadas en el servidor.</small></footer></div></div>
+      <div className="evaluation-hint"><span>Escala</span>{scale.map((item) => item.codigo).map((item) => <Grade key={item} value={item} />)}<small>{Object.hasOwn(records, studentId) ? "Puedes corregir las notas y guardar los cambios. Si faltan registros, genera las plantillas del año." : error ? "No se pudieron cargar las notas." : "Cargando notas del alumno..."}</small></div>
+      <section className="competency-list">{competencies.map((competency, index) => { const id = String(competency.id_competencia); const isOpen = open.includes(id); const complete = Boolean(scores[`level-${competency.id_competencia}`]) && (bimester === "final" || competency.capacitiesLoaded && competency.capacities.every((capacity) => scores[`capacity-${capacity.id_capacidad}`])); return <article className={`competency-card ${isOpen ? "is-open" : ""}`} key={id}><div className="competency-card__heading" role="button" tabIndex={0} onClick={() => setOpen((current) => isOpen ? current.filter((item) => item !== id) : [...current, id])} onKeyDown={(event) => { if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) event.currentTarget.click(); }}><span className="competency-card__number">{index + 1}</span><span><small>{competency.codigo || `Competencia ${index + 1}`}</small><strong>{competency.descripcion}</strong></span>{complete && <span className="competency-complete"><Check size={13} /> Completa</span>}<label className="competency-achievement" onClick={(event) => event.stopPropagation()}><small>Nivel de logro <em>Registrado en el servidor</em></small><select disabled={finalized || !scores.noteIds?.[`level-${id}`]} value={competencyLevel(competency) === "—" ? "" : competencyLevel(competency)} onChange={(event) => updateScore(`level-${id}`, event.target.value)}><option value="">Sin nota</option>{scale.map((item) => item.codigo).map((value) => <option key={value}>{value}</option>)}</select></label>{isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}</div>{isOpen && <div className="capacity-table">{bimester === "final" ? <p>Las notas finales se registran por competencia.</p> : <>{!competency.capacitiesLoaded && <p>Cargando capacidades...</p>}<div className="capacity-table__head"><span>Capacidad</span><span>Calificación</span></div>{competency.capacities.map((capacity, capacityIndex) => { const key = `capacity-${capacity.id_capacidad}`; return <div className="capacity-row" key={capacity.id_capacidad}><div><small>Capacidad {capacityIndex + 1}</small><strong>{capacity.descripcion}</strong></div><div className="score-options">{scale.map((item) => item.codigo).map((value) => <button disabled={finalized || !scores.noteIds?.[key]} aria-label={`${capacity.descripcion}: ${value}`} className={scores[key] === value ? "is-selected" : ""}  onClick={() => updateScore(key, scores[key] === value ? "" : value)} key={value}>{value}</button>)}</div></div>; })}</>}<label className="competency-conclusion"><span>Conclusión descriptiva <small>Opcional</small></span><textarea disabled={finalized || !scores.noteIds?.[`comment-${id}`]} value={scores[`comment-${id}`] || ""} onChange={(event) => updateScore(`comment-${id}`, event.target.value)} placeholder="Escribe una observación sobre el desempeño del alumno en esta competencia..." maxLength={500} /><small>{(scores[`comment-${id}`] || "").length}/500</small></label></div>}</article>; })}</section>
+      <footer className="evaluation-actions"><div><small>{hasChanges ? "Hay cambios pendientes. Guarda antes de cambiar los filtros académicos." : "Las notas guardadas se pueden corregir."}</small>{message && <p>{message}</p>}</div><button disabled={!hasChanges || saving} onClick={saveChanges}>{saving ? "Guardando..." : "Guardar cambios"}</button></footer></div></div>
     </>}
 
   </main>;

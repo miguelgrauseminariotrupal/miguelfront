@@ -1,0 +1,19 @@
+.chat-artifact { margin: 14px 0; padding: 18px; border: 1px solid #dce6f0; border-radius: 16px; background: #fff; color: #24364b; max-width: 680px; }
+.chat-artifact h4 { margin: 0 0 12px; font-size: 16px; }
+.chat-artifact-chart { display: block; width: 100%; max-height: 300px; margin: auto; }
+.chat-artifact-chart text { font-size: 12px; fill: #475569; }
+.chat-artifact-legend { display: flex; flex-wrap: wrap; gap: 10px 18px; padding: 0; list-style: none; font-size: 13px; }
+.chat-artifact-legend li { display: flex; align-items: center; gap: 6px; }
+.chat-artifact-legend i { width: 10px; height: 10px; border-radius: 50%; }
+.chat-artifact-table { overflow-x: auto; margin: 12px 0; }
+.chat-artifact table { border-collapse: collapse; width: 100%; font-size: 13px; }
+.chat-artifact th, .chat-artifact td { text-align: left; padding: 9px 12px; border-bottom: 1px solid #e2e8f0; white-space: nowrap; }
+.chat-artifact th { background: #f1f5f9; }
+.chat-artifact button { display: flex; align-items: center; gap: 8px; margin-top: 14px; padding: 10px 14px; border: 0; border-radius: 8px; background: #174e83; color: #fff; cursor: pointer; }
+.chat-artifact button:disabled { opacity: .6; cursor: wait; }
+.chat-artifact summary { cursor: pointer; font-size: 13px; }
+.chat-report-formats { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-top: 14px; }
+.chat-report-formats label { display: grid; gap: 5px; font-size: 13px; }
+.chat-report-formats select { padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; background: white; color: #24364b; }
+.chat-report-formats small { flex-basis: 100%; }
+.chat-report-formats button { margin-top: 0; }

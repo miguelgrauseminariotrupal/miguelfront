@@ -5,9 +5,17 @@ import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { ArrowUp, Bot, CalendarCheck, ChevronRight, GraduationCap, MessageSquare, PanelLeft, Plus, RotateCcw, Square, Users, X } from "lucide-react";
 import { agentTransport } from "../services/agentService";
+import ChatArtifact from "../components/ChatArtifact";
+import { saveChatMessages } from "../utils/chatHistory";
+import { markdownReports, asksForReport } from "../utils/markdownReport";
 
 const STORAGE_KEY = "miguel_agent_chats";
 const LABELS = {
+  exportar_excel: "Preparando reporte Excel",
+  generar_grafico: "Preparando gráfico",
+  crear_grafico: "Preparando gráfico",
+  mostrar_grafico: "Preparando gráfico",
+  graficar: "Preparando gráfico",
   listar_anios_lectivos: "Consultando años lectivos",
   listar_niveles: "Consultando niveles",
   listar_grados: "Consultando grados",
@@ -34,12 +42,19 @@ function loadChats() {
   } catch { /* Un historial inválido no impide abrir el chat. */ }
   return [newChat()];
 }
-function MessagePart({ part }) {
-  if (part.type === "text") return <div className="agent-markdown"><Markdown remarkPlugins={[remarkGfm]}>{part.text}</Markdown></div>;
+function MessagePart({ part, prompt, allowTableExport, complete }) {
+  if (part.type === "text") {
+    const reports = allowTableExport && complete && asksForReport(prompt) ? markdownReports(part.text) : [];
+    return <><div className="agent-markdown"><Markdown remarkPlugins={[remarkGfm]}>{part.text}</Markdown></div>{reports.map((report, index) => <ChatArtifact key={index} kind="report" output={report} prompt={prompt} />)}</>;
+  }
   if (!isToolUIPart(part)) return null;
   const name = part.toolName || part.type.replace(/^tool-/, "");
   const done = ["output-available", "output-error"].includes(part.state);
   const error = part.state === "output-error" || Boolean(part.output?.error);
+  if (part.state === "output-available" && !error) {
+    if (["exportar_excel", "generar_reporte", "exportar_reporte", "exportar_pdf", "exportar_word", "exportar_csv"].includes(name)) return <ChatArtifact kind="report" output={{ ...part.output, ...(name === "exportar_pdf" ? { formato: "pdf" } : name === "exportar_word" ? { formato: "docx" } : name === "exportar_csv" ? { formato: "csv" } : {}) }} prompt={prompt} />;
+    if (["generar_grafico", "crear_grafico", "mostrar_grafico", "graficar"].includes(name)) return <ChatArtifact kind="chart" output={part.output} prompt={prompt} />;
+  }
   return <div className={`agent-tool${error ? " agent-tool-error" : ""}`} role="status">
     <span className={`agent-dot${done ? " done" : ""}`} />
     {LABELS[name] || "Consultando información académica"}{error ? ": no se pudo consultar" : done ? " · Listo" : "…"}
@@ -49,9 +64,10 @@ function Conversation({ conversation, onSave }) {
   const [input, setInput] = useState("");
   const bottom = useRef(null);
   const textarea = useRef(null);
+  const initialMessages = useRef(conversation.messages);
   const { messages, sendMessage, status, error, stop, regenerate } = useChat({
     id: conversation.id,
-    messages: conversation.messages,
+    messages: initialMessages.current,
     transport: agentTransport,
   });
   const busy = status === "submitted" || status === "streaming";
@@ -80,9 +96,9 @@ function Conversation({ conversation, onSave }) {
           <strong>{title}</strong><span>{description}</span><ChevronRight size={15} className="agent-suggestion-arrow" aria-hidden="true" />
         </button>)}</div>
       </div>}
-      {messages.map((message) => <article key={message.id} className={`agent-message agent-message-${message.role}`}>
+      {messages.map((message, messageIndex) => <article key={message.id} className={`agent-message agent-message-${message.role}`}>
         <span className={`agent-message-author${message.role === "user" ? " sr-only" : ""}`}>{message.role === "user" ? "Tú" : <><Bot size={16} aria-hidden="true" /> Miguel</>}</span>
-        {message.parts.map((part, index) => <MessagePart key={index} part={part} />)}
+        {message.parts.map((part, index) => <MessagePart key={index} part={part} complete={!busy || messageIndex < messages.length - 1} allowTableExport={message.role === "assistant" && !message.parts.some(item => isToolUIPart(item) && item.state === "output-available" && ["exportar_excel", "generar_reporte", "exportar_reporte", "exportar_pdf", "exportar_word", "exportar_csv"].includes(item.toolName || item.type.replace(/^tool-/, "")))} prompt={messages.slice(0, messageIndex).findLast(item => item.role === "user")?.parts.filter(item => item.type === "text").map(item => item.text).join(" ") || ""} />)}
       </article>)}
       {busy && <div className="agent-thinking" role="status"><span className="agent-thinking-dots" aria-hidden="true"><i /><i /><i /></span><span>{status === "submitted" ? "Enviando…" : "Preparando tu respuesta…"}</span></div>}
       {error && <div className="agent-error" role="alert"><p>{error.message}</p><button type="button" disabled={busy} onClick={() => regenerate()}><RotateCcw size={14} />Reintentar</button></div>}
@@ -109,12 +125,7 @@ export default function AgenteMiguelPage() {
   const historyToggle = useRef(null);
   const active = chats.find((chat) => chat.id === activeId) || chats[0];
   const save = useCallback((id, messages) => {
-    setChats((previous) => previous.map((chat) => {
-      if (chat.id !== id || chat.messages === messages) return chat;
-      const first = messages.find((m) => m.role === "user");
-      const title = first?.parts.filter((p) => p.type === "text").map((p) => p.text).join("").slice(0, 80);
-      return { ...chat, messages, title: title || chat.title };
-    }));
+    setChats(previous => saveChatMessages(previous, id, messages));
   }, []);
   useEffect(() => {
     try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(chats)); } catch { /* El chat sigue funcionando si no hay espacio. */ }

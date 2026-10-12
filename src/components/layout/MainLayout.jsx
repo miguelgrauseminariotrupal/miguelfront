@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Outlet } from "react-router-dom";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
+import BlockExcelDownloads from "./BlockExcelDownloads";
 
 export default function MainLayout() {
+  const containerRef = useRef(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => localStorage.getItem("sidebar-collapsed") === "true");
 
@@ -37,9 +39,10 @@ export default function MainLayout() {
   return (
     <div className="app-shell">
       <Sidebar open={sidebarOpen} collapsed={sidebarCollapsed} onClose={() => setSidebarOpen(false)} />
-      <div className={`app-shell__main ${sidebarCollapsed ? "is-expanded" : ""}`}>
+      <div ref={containerRef} className={`app-shell__main ${sidebarCollapsed ? "is-expanded" : ""}`}>
         <Header onOpenMenu={toggleMenu} navigationOpen={sidebarOpen} />
         <Outlet />
+        <BlockExcelDownloads containerRef={containerRef} />
       </div>
     </div>
   );

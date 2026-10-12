@@ -1,4 +1,4 @@
-import { apiGet, apiPost, extractList } from "./api";
+import { apiGet, apiPost, apiPut, extractList } from "./api";
 
 export async function getBimestres(idAnio, { signal } = {}) {
   return extractList(await apiGet("/bimestres", { params: { id_anio_lectivo: idAnio, estado: true }, signal }));
@@ -15,3 +15,6 @@ export function getNotasMatriculaCurso({ id_matricula, id_curso, signal }) {
 export function generarPlantillasNotas(idAnio) {
   return apiPost("/generar-plantillas-notas", { id_anio: Number(idAnio) });
 }
+
+export function actualizarNotaCompetencia(body) { return apiPut("/nota-competencia", body); }
+export function actualizarNotaCapacidad(body) { return apiPut("/nota-capacidad", body); }

@@ -1,0 +1,10 @@
+.app-header-actions { display: flex; align-items: center; gap: 16px; min-width: 0; }
+.screen-excel { position: relative; flex-shrink: 0; }
+.screen-excel-button { display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 40px; padding: 9px 13px; border: 1px solid #d2e0ed; border-radius: 9px; color: #174e83; background: #f4f8fc; font: inherit; font-size: 13px; cursor: pointer; white-space: nowrap; }
+.screen-excel-button:hover { background: #e8f1fa; }
+.screen-excel-button:disabled { opacity: .6; cursor: wait; }
+.screen-excel-feedback { position: absolute; right: 0; top: calc(100% + 10px); width: min(320px, 80vw); padding: 14px 30px 14px 14px; border: 1px solid #d2e0ed; border-radius: 9px; background: white; box-shadow: 0 6px 24px #174e8320; font-size: 13px; color: #24364b; }
+.screen-excel-feedback button { position: absolute; top: 6px; right: 7px; border: 0; background: transparent; cursor: pointer; font-size: 20px; }
+.block-excel-download { display: flex; justify-content: flex-end; padding: 10px 0; flex-basis: 100%; grid-column: 1 / -1; }
+.block-excel-download .screen-excel-button { font-size: 12px; min-height: 36px; }
+@media (max-width: 700px) { .app-header-actions { gap: 7px; } .screen-excel-button { padding: 7px; font-size: 11px; min-height: 40px; } .app-header h1 { max-width: 25vw; } .app-header-actions .user-name { max-width: 16vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } }

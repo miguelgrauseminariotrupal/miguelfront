@@ -13,6 +13,9 @@
     "@ai-sdk/react": "^3.0.304",
     "@vitejs/plugin-react": "latest",
     "ai": "^6.0.301",
+    "docx": "^9.10.0",
+    "exceljs": "^4.4.0",
+    "jspdf": "^4.2.1",
     "lucide-react": "^1.40.0",
     "react": "latest",
     "react-dom": "latest",
@@ -21,5 +24,8 @@
     "remark-gfm": "^4.0.1",
     "vite": "latest",
     "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "linkedom": "^0.18.13"
   }
 }

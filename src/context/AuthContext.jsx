@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { apiPost } from "../services/api";
 import { getUsuario } from "../services/usuarios.service";
+import { profileNames, sessionFullName } from "../utils/userProfile";
 const SESSION_KEY = "miguel_session";
 const AuthContext = createContext(null);
 function loadSession() {
@@ -29,9 +30,7 @@ export function AuthProvider({ children }) {
         : result?.usuario && typeof result.usuario === "object" ? result.usuario
         : result?.data && typeof result.data === "object" ? result.data : null;
       if (controller.signal.aborted || String(profile?.id_usuario) !== String(userId)) return;
-      const names = Object.fromEntries(["nombres", "apaterno", "amaterno"]
-        .filter(key => Object.hasOwn(profile, key))
-        .map(key => [key, profile[key]]));
+      const names = profileNames(profile);
       if (!Object.keys(names).length) return;
       setSession(current => {
         if (current?.access_token !== accessToken || String(current?.usuario?.id_usuario) !== String(userId)) return current;
@@ -43,9 +42,7 @@ export function AuthProvider({ children }) {
     return () => controller.abort();
   }, [userId, accessToken]);
 
-  const userFullName = [session?.usuario?.nombres, session?.usuario?.apaterno, session?.usuario?.amaterno]
-    .filter(value => typeof value === "string" && value.trim())
-    .map(value => value.trim()).join(" ");
+  const userFullName = sessionFullName(session);
   const value = useMemo(() => ({
     isAuthenticated: Boolean(session && role), role,
     user: session?.usuario, docente: session?.docente,
