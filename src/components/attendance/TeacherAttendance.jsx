@@ -61,7 +61,7 @@ export default function TeacherAttendance({ docente, children, initialSection })
     try { sessionStorage.setItem(`miguel_teacher_section_${teacherId}`, selected); } catch { /* La selección sigue disponible en memoria. */ }
   }, [teacherId, selected]);
 
-  if (loading) return <LoadingBar />;
+  if (loading) return <div className="teacher-section-loading" role="status"><p>Cargando tu sección asignada…</p><LoadingBar label="Cargando sección asignada" /></div>;
   if (error) return <p role="alert">{error}</p>;
   if (!teacherId) return <p role="status">Tu usuario no está vinculado a un docente. Solicita al administrador que revise la vinculación.</p>;
   if (!sections.length) return <p role="status">No tienes una sección activa asignada como docente responsable. Solicita al administrador que revise la programación de secciones.</p>;

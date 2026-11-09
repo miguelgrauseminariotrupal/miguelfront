@@ -9,5 +9,10 @@ export default function AsistenciaPage() {
   const [selection, setSelection] = useState({ anio: "", nivel: "", grado: "", seccion: "" });
   const handleSelection = useCallback((nextSelection) => setSelection(nextSelection), []);
 
-  return <main className="page-content attendance-page"><div className="page-heading"><h2>Asistencia</h2><p>Gestión de asistencia académica</p></div>{role === "admin" ? <><AcademicFilters onSelectionChange={handleSelection} /><AttendanceWorkspace selection={selection} /></> : <TeacherAttendance docente={docente} />}</main>;
+  return <main className="page-content attendance-page">
+    <div className="attendance-page__content">
+      <div className="page-heading"><h2>Asistencia</h2><p>Gestión de asistencia académica</p></div>
+      {role === "admin" ? <><AcademicFilters onSelectionChange={handleSelection} /><AttendanceWorkspace selection={selection} /></> : <TeacherAttendance docente={docente} />}
+    </div>
+  </main>;
 }
