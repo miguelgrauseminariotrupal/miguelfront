@@ -55,6 +55,7 @@ export default function LoginPage() {
             <p className="brand__intro">Hola, soy</p><h1 id="login-title">MIGUEL</h1>
             <span className="brand__accent" aria-hidden="true" /><p className="brand__message">¡Espero que tengas un excelente día!</p>
           </header>
+          <p className="login-access-note">Acceso para docentes y administradores</p>
           <form className="login-form" onSubmit={handleSubmit} noValidate>
             <div className={`field ${errors.username ? "is-invalid" : ""}`}>
               <label htmlFor="username">Usuario</label><div className="input-wrap"><UserRound /><input id="username" name="username" placeholder="Ingresa tu usuario" autoComplete="username" value={values.username} onChange={handleChange} aria-invalid={Boolean(errors.username)} aria-describedby="username-error" /></div>

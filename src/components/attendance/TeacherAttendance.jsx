@@ -67,13 +67,10 @@ export default function TeacherAttendance({ docente, children, initialSection })
   if (!sections.length) return <p role="status">No tienes una sección activa asignada como docente responsable. Solicita al administrador que revise la programación de secciones.</p>;
   const selection = sections.find(item => item.seccion === selected);
   return <>
-    <section className="academic-filters" aria-label="Sección asignada">
-      <div className="academic-field">
-        <label htmlFor="teacher-section">{sections.length === 1 ? "Tu sección" : "Tus secciones"}</label>
-        <select id="teacher-section" value={selected} onChange={event => setSelected(event.target.value)} disabled={sections.length === 1}>
-          {sections.map(item => <option key={item.seccion} value={item.seccion}>{item.label}</option>)}
-        </select>
-      </div>
+    <section className="teacher-section-summary" aria-label="Sección asignada">
+      <span className="teacher-section-summary__label">{sections.length === 1 ? "Tu sección" : "Tus secciones"}</span>
+      {sections.length === 1 ? <p className="teacher-section-summary__value">{selection?.label}</p> :
+        <div className="teacher-section-options">{sections.map(item => <button type="button" key={item.seccion} aria-pressed={item.seccion === selected} onClick={() => setSelected(item.seccion)}>{item.label}</button>)}</div>}
     </section>
     {selection && (children ? children(selection) : <AttendanceWorkspace selection={selection} />)}
   </>;

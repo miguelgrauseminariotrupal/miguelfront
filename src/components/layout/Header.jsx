@@ -11,7 +11,7 @@ export default function Header({ onOpenMenu, navigationOpen }) {
   const menuRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout, userFullName } = useAuth();
+  const { logout, userFullName, role } = useAuth();
   const displayName = userFullName || "Usuario";
 
   useEffect(() => {
@@ -30,7 +30,7 @@ export default function Header({ onOpenMenu, navigationOpen }) {
       </div>
       <div className="app-header-actions">{location.pathname !== "/agente-miguel" && <DownloadScreenExcel />}<div className="user-menu" ref={menuRef}>
         <button className="user-menu__trigger" type="button" aria-expanded={menuOpen} onClick={() => setMenuOpen((value) => !value)}>
-          <span className="user-avatar">{displayName.charAt(0).toUpperCase()}</span><span className="user-name" title={displayName}>{displayName}</span><ChevronDown size={16} />
+          <span className="user-avatar">{displayName.charAt(0).toUpperCase()}</span><span className="user-identity"><span className="user-name" title={displayName}>{displayName}</span><span className={`user-role user-role--${role}`}>{role === "admin" ? "Administrador" : "Docente"}</span></span><ChevronDown size={16} />
         </button>
         {menuOpen && <div className="user-menu__dropdown"><button type="button" onClick={handleLogout}><LogOut size={17} />Cerrar sesión</button></div>}
       </div></div>
