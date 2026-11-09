@@ -119,7 +119,7 @@ export default function AttendanceWorkspace({ selection }) {
     </div>
     <div className="attendance-navigation"><button type="button" aria-label="Día anterior" onClick={() => moveDate(-1)}><ChevronLeft size={19} /></button><span>{selectedDate === todayDate ? "Hoy" : formatDate(dateFromValue(selectedDate))}</span><button type="button" aria-label="Día siguiente" onClick={() => moveDate(1)}><ChevronRight size={19} /></button></div>
     {filtersComplete && !loading && !error && <p className="attendance-responsible-teacher"><span>Docente responsable de la sección:</span> <strong>{responsibleTeacher ? fullName(responsibleTeacher) : "Sin docente asignado"}</strong></p>}
-    <div className="student-list-heading"><div><Users size={19} /><h3>Estudiantes matriculados</h3></div><span>{loading ? <LoadingBar /> : `${students.length} estudiantes`}</span></div>
+    <div className="student-list-heading"><div><Users size={19} /><h3>Estudiantes matriculados</h3></div>{!loading && <span>{students.length} estudiantes</span>}</div>
     <div className="student-attendance-list">
       {loading && <LoadingBar />}
       {!loading && error && <p className="parameter-feedback is-error" role="alert">{error}</p>}
