@@ -1416,3 +1416,14 @@ img, svg { max-width: 100%; }
 }
 @media (max-height: 720px) { .agent-empty-mark { width: 48px; height: 48px; margin-bottom: 12px; border-radius: 16px; } .agent-empty { padding: 8px 0; } .agent-suggestions { margin-top: 20px; } }
 @media (prefers-reduced-motion: reduce) { .agent-dot, .agent-thinking-dots i { animation: none; } .agent-suggestions button { transition: none; } }
+
+.loading-bar { display: inline-block; width: 100%; min-width: 64px; max-width: 420px; height: 6px; margin: 12px 0; overflow: hidden; border-radius: 999px; background: #dbe5ec; vertical-align: middle; }
+.loading-bar__fill { display: block; width: 40%; height: 100%; border-radius: inherit; background: var(--color-primary, #2563eb); animation: loading-bar-slide 1.2s ease-in-out infinite; }
+@keyframes loading-bar-slide { from { transform: translateX(-100%); } to { transform: translateX(350%); } }
+@media (prefers-reduced-motion: reduce) { .loading-bar__fill { animation: none; width: 100%; opacity: .65; } }
+
+.agent-markdown a.chat-excel-link, .chat-excel-link { display: inline-flex; align-items: center; gap: 12px; padding: 14px 18px; margin: 8px 0; border: 1px solid #b7dfc9; border-radius: 12px; background: #f0faf4; color: #187443; text-decoration: none; max-width: 100%; }
+.chat-excel-link span { display: flex; flex-direction: column; gap: 3px; }
+.chat-excel-link small { font-size: 12px; color: #496956; }
+.chat-excel-link:hover { background: #e1f4e8; }
+.chat-excel-link:focus-visible { outline: 2px solid #187443; outline-offset: 3px; }

@@ -1,3 +1,4 @@
+import LoadingBar from "../LoadingBar.jsx";
 import { Pencil, Plus, RotateCcw, Search } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getAniosLectivos } from "../../services/aniosLectivos.service";
@@ -85,7 +86,7 @@ function CrudPanel({ initial, createValues, canOperate = true, showActions = tru
     {feedback.error && <p className="parameter-feedback is-error" role="alert">{feedback.error}</p>}
     {feedback.success && <p className="parameter-feedback is-success" role="status">{feedback.success}</p>}
     {resultsVisible && <div className="parameter-table-wrap configuration-list">
-      {loading && <p className="parameter-empty">Cargando...</p>}
+      {loading && <LoadingBar />}
       {!loading && !filteredItems.length && <p className="parameter-empty">No se encontraron registros.</p>}
       {!loading && filteredItems.length > 0 && <table className="parameter-table"><thead><tr><th className="table-actions">Acciones</th>{gridColumns.map((column) => <th key={column.label}>{column.label}</th>)}</tr></thead><tbody>
         {filteredItems.map((item) => <tr className={formOpen && text(form.id) === text(idOf(item)) ? "is-editing" : ""} key={idOf(item)}><td className="table-actions" data-label="Acciones"><button type="button" onClick={() => { if (onEditItem?.(item) === true) return; setForm(editValues(item)); setFormOpen(true); setResultsVisible(true); setFeedback({ error: "", success: "" }); }}><Pencil size={15} />Editar</button></td>{gridColumns.map((column) => <td data-label={column.label} key={column.label}>{column.value(item) || "—"}</td>)}</tr>)}

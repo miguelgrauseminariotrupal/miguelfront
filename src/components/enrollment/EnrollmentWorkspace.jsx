@@ -1,3 +1,4 @@
+import LoadingBar from "../LoadingBar.jsx";
 import { Search, UserPlus, Users, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getAlumnos } from "../../services/alumnos.service";
@@ -64,7 +65,7 @@ export default function EnrollmentWorkspace({ selection }) {
   return <section className="enrollment-workspace">
     <div className="enrollment-heading"><div><Users size={20} /><h3>Alumnos matriculados</h3></div><div className="enrollment-heading__actions"><span>{activeEnrollments.length} estudiantes</span><button className="enrollment-add" type="button" onClick={() => { setAdding((value) => !value); setQuery(""); }}>{adding ? <X size={16} /> : <UserPlus size={16} />}{adding ? "Cerrar" : "Agregar alumno"}</button></div></div>
     {feedback.message && <p className={`parameter-feedback is-${feedback.type}`} role="status">{feedback.message}</p>}
-    {loading && <p className="parameter-empty">Cargando matrículas...</p>}
+    {loading && <LoadingBar />}
     {!loading && <div className={`enrollment-grid ${adding ? "is-adding" : ""}`}>
       <div className="enrollment-card">
         <h4>Matriculados en la sección</h4>

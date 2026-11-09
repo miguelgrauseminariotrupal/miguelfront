@@ -1,3 +1,4 @@
+import LoadingBar from "../components/LoadingBar.jsx";
 import { Pencil, Plus, RotateCcw, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { createAnioLectivo, getAniosLectivos, updateAnioLectivo } from "../services/aniosLectivos.service";
@@ -26,7 +27,7 @@ function ResultsTable({ columns, items, loading, query, rowKey, editingId, onEdi
     <table className="parameter-table"><thead><tr><th className="table-actions">Acciones</th>{columns.map((column) => <th key={column.label}>{column.label}</th>)}</tr></thead>
       <tbody>{filtered.map((item) => <tr className={String(editingId) === String(rowKey(item)) ? "is-editing" : ""} key={rowKey(item)}><td className="table-actions" data-label="Acciones"><button type="button" onClick={() => onEdit(item)}><Pencil size={15} />Editar</button></td>{columns.map((column) => <td data-label={column.label} key={column.label}>{column.value(item) || "—"}</td>)}</tr>)}</tbody></table>
     {!loading && !filtered.length && <p className="parameter-empty">No se encontraron registros.</p>}
-    {loading && <p className="parameter-empty">Cargando...</p>}
+    {loading && <LoadingBar />}
   </div>;
 }
 
@@ -37,7 +38,7 @@ function Feedback({ error, success }) {
 }
 
 function EmptyList({ loading, items }) {
-  if (loading) return <p className="parameter-empty">Cargando...</p>;
+  if (loading) return <LoadingBar />;
   if (!items.length) return <p className="parameter-empty">No hay registros para mostrar.</p>;
   return null;
 }

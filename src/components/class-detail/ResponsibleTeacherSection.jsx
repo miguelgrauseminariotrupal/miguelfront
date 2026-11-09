@@ -1,3 +1,4 @@
+import LoadingBar from "../LoadingBar.jsx";
 import { UserRound } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getDocente } from "../../services/docentes.service";
@@ -42,7 +43,7 @@ export default function ResponsibleTeacherSection({ classRecord, onUpdated }) {
     <section className="responsible-teacher-card">
       <div className="responsible-teacher-card__heading"><div><span>Detalle de clase</span><h3>Docente responsable</h3></div><UserRound size={24} /></div>
       {classRecord?.academic_context && <p className="class-academic-path">{[classRecord.academic_context.anio?.anio, classRecord.academic_context.nivel?.nombre, classRecord.academic_context.grado?.nombre, classRecord.academic_context.seccion?.nombre].filter(Boolean).join(" - ")}</p>}
-      {hasCurrentTeacher ? <div className="current-teacher"><small>Docente responsable actual</small><strong>{teacherFullName(currentTeacher) || "Cargando docente..."}</strong></div> : <p className="responsible-teacher-empty">No hay un docente responsable asignado.</p>}
+      {hasCurrentTeacher ? <div className="current-teacher"><small>Docente responsable actual</small><strong>{teacherFullName(currentTeacher) || <LoadingBar />}</strong></div> : <p className="responsible-teacher-empty">No hay un docente responsable asignado.</p>}
       {!pickerOpen && <button className="teacher-primary-action" type="button" onClick={() => { setPickerOpen(true); setFeedback({ type: "", message: "" }); }}>{hasCurrentTeacher ? "Cambiar docente responsable" : "Asignar docente"}</button>}
       {pickerOpen && <TeacherSelector onCancel={() => setPickerOpen(false)} onConfirm={assign} />}
       {feedback.message && <p className={`parameter-feedback is-${feedback.type}`}>{feedback.message}</p>}

@@ -1,3 +1,4 @@
+import LoadingBar from "../components/LoadingBar.jsx";
 import { AlertCircle, Bot, CalendarCheck, CheckCircle2, ChevronRight, ClipboardCheck, Clock3, UserMinus, Users } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
@@ -156,7 +157,7 @@ function HomeIndicators({ assignedSelection }) {
       {!assignedSelection && <AcademicFilters onSelectionChange={handleSelection} />}
 
       {!selection.anio && <div className="dashboard-state"><CalendarCheck size={24} /><p>Selecciona un año lectivo para cargar el resumen.</p></div>}
-      {selection.anio && loading && <div className="dashboard-state" role="status"><span className="dashboard-loader" /><p>Calculando indicadores del día...</p></div>}
+      {selection.anio && loading && <LoadingBar />}
       {selection.anio && !loading && error && <div className="dashboard-state is-error" role="alert"><AlertCircle size={24} /><p>{error}</p></div>}
 
       {selection.anio && !loading && !error && <>
