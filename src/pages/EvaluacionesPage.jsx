@@ -21,7 +21,12 @@ function Grade({ value }) { return <span className={`evaluation-grade evaluation
 
 export default function EvaluacionesPage() {
   const { role, docente } = useAuth();
-  return role === "admin" ? <EvaluacionesWorkspace /> : <TeacherAttendance docente={docente}>{selection => <EvaluacionesWorkspace assignedSelection={selection} />}</TeacherAttendance>;
+  return <main className="page-content evaluation-page">
+    <div className="evaluation-page__content">
+      <div className="page-heading"><h2>Registro de calificaciones</h2><p>Registra y corrige las notas por bimestre y las notas finales de cada alumno.</p></div>
+      {role === "admin" ? <EvaluacionesWorkspace /> : <TeacherAttendance docente={docente}>{selection => <EvaluacionesWorkspace assignedSelection={selection} />}</TeacherAttendance>}
+    </div>
+  </main>;
 }
 
 function EvaluacionesWorkspace({ assignedSelection }) {
@@ -220,8 +225,7 @@ function EvaluacionesWorkspace({ assignedSelection }) {
   const studentIndex = students.findIndex((item) => String(item.id_estudiante) === String(studentId));
   const academicError = Object.values(academicErrors).find(Boolean);
 
-  return <main className="page-content evaluation-page">
-    <div className="page-heading"><h2>Registro de calificaciones</h2><p>Registra y corrige las notas por bimestre y las notas finales de cada alumno.</p></div>
+  return <div className="evaluation-register">
     <section className="evaluation-setup evaluation-setup--api" aria-label="Datos de evaluación">
       {!assignedSelection && <>
       <label>Año lectivo<select value={selection.anio} disabled={hasChanges || saving || academicLoading.anios} onChange={(e) => selectAnio(e.target.value)}><option value="">Seleccionar</option>{lists.anios.map((item) => <option key={item.id_anio_lectivo} value={item.id_anio_lectivo}>{item.anio}</option>)}</select></label>
@@ -244,5 +248,5 @@ function EvaluacionesWorkspace({ assignedSelection }) {
       <footer className="evaluation-actions"><div><small>{hasChanges ? "Hay cambios pendientes. Guarda antes de cambiar los filtros académicos." : "Las notas guardadas se pueden corregir."}</small>{message && <p>{message}</p>}</div><button disabled={!hasChanges || saving} onClick={saveChanges}>{saving ? "Guardando..." : "Guardar cambios"}</button></footer></div></div>
     </>}
 
-  </main>;
+  </div>;
 }
