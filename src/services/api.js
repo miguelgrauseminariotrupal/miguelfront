@@ -1,3 +1,5 @@
+import { recoverExpiredSession } from "./sessionRecovery.js";
+
 const OPENAPI_SERVER_URL = "https://fqidwaafiojvcamzmilu.supabase.co/functions/v1";
 const configuredUrl = import.meta.env.VITE_API_URL?.trim().replace(/\/$/, "");
 const API_URL = configuredUrl
@@ -71,7 +73,7 @@ export async function apiRequest(path, { method = "GET", params = {}, body, sign
     } catch {
       // El backend puede responder sin cuerpo o con contenido que no sea JSON.
     }
-    if (reloadOnFutureJwtError(`${backendMessage} ${rawResponse}`)) {
+    if ((normalizedPath !== "/login" && recoverExpiredSession({ status: response.status, message: `${backendMessage} ${rawResponse}`, accessToken })) || reloadOnFutureJwtError(`${backendMessage} ${rawResponse}`)) {
       return new Promise(() => {});
     }
     const message = backendMessage

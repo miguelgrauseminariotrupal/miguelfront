@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { apiPost } from "../services/api";
 import { getUsuario } from "../services/usuarios.service";
 import { profileNames, sessionFullName } from "../utils/userProfile";
+import { resetSessionRecovery } from "../services/sessionRecovery.js";
 const SESSION_KEY = "miguel_session";
 const AuthContext = createContext(null);
 function loadSession() {
@@ -54,10 +55,12 @@ export function AuthProvider({ children }) {
       if (!result?.access_token || !result?.usuario) throw new Error("El servidor no devolvió una sesión válida.");
       if (!getRole(result)) throw new Error("Tu usuario no tiene un rol ADMIN o DOCENTE activo. Solicita al administrador que lo asigne.");
       sessionStorage.setItem(SESSION_KEY, JSON.stringify(result));
+      resetSessionRecovery();
       setSession(result);
       return getRole(result);
     },
     logout() {
+      resetSessionRecovery();
       for (const key of [SESSION_KEY, "miguel_authenticated", "miguel_role", "miguel_agent_chats"]) sessionStorage.removeItem(key);
       setSession(null);
     },

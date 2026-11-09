@@ -1,4 +1,5 @@
 import { DefaultChatTransport } from 'ai';
+import { recoverExpiredSession } from './sessionRecovery.js';
 
 const defaultEndpoint = 'https://fqidwaafiojvcamzmilu.supabase.co/functions/v1/chat';
 export const agentEndpoint = import.meta.env.VITE_AGENT_API_URL?.trim() || defaultEndpoint;
@@ -21,6 +22,7 @@ export const agentTransport = new DefaultChatTransport({
     const response = await fetch(url, { ...options, headers });
     if (!response.ok) {
       const body = await response.json().catch(() => null);
+      if (recoverExpiredSession({ status: response.status, message: JSON.stringify(body), accessToken })) return new Promise(() => {});
       throw new Error(body?.error || 'No se pudo conectar con Agente Miguel.');
     }
     return response;
@@ -38,6 +40,7 @@ async function getChatHistory(id, { signal } = {}) {
   });
   if (!response.ok) {
     const body = await response.json().catch(() => null);
+    if (recoverExpiredSession({ status: response.status, message: JSON.stringify(body), accessToken })) return new Promise(() => {});
     throw new Error(body?.error || body?.message || "No se pudo cargar el historial del chat.");
   }
   const data = await response.json();
