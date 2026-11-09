@@ -7,7 +7,7 @@ import { isToolUIPart } from "ai";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { ArrowUp, Bot, CalendarCheck, ChevronRight, GraduationCap, MessageSquare, PanelLeft, Plus, RotateCcw, Square, Users, X } from "lucide-react";
-import { agentTransport } from "../services/agentService";
+import { agentTransport, listChatConversations, getChatMessages } from "../services/agentService";
 import ChatArtifact from "../components/ChatArtifact";
 import { saveChatMessages } from "../utils/chatHistory";
 import { markdownReports, asksForReport } from "../utils/markdownReport";
@@ -15,7 +15,6 @@ import { useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import TeacherAttendance from "../components/attendance/TeacherAttendance";
 
-const STORAGE_KEY = "miguel_agent_chats";
 const LABELS = {
   exportar_excel: "Preparando reporte Excel",
   generar_grafico: "Preparando gráfico",
@@ -38,16 +37,6 @@ const SUGGESTIONS = [
   { title: "Secciones", description: "Encuentra tu información académica", prompt: "¿Qué secciones puedo consultar en el año lectivo actual?", icon: Users },
 ];
 const newChat = () => ({ id: crypto.randomUUID(), title: "Nueva conversación", messages: [] });
-function loadChats() {
-  try {
-    const saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY));
-    if (Array.isArray(saved) && saved.length) {
-      const valid = saved.filter((c) => typeof c.id === "string" && typeof c.title === "string" && Array.isArray(c.messages));
-      if (valid.length) return valid;
-    }
-  } catch { /* Un historial inválido no impide abrir el chat. */ }
-  return [newChat()];
-}
 function toolExcelLinks(part) {
   if (!isToolUIPart(part) || part.state !== "output-available" || part.output?.error) return [];
   return excelLinks(part.output, (part.toolName || part.type.replace(/^tool-/, "")) === "exportar_excel");
@@ -132,9 +121,14 @@ function Conversation({ conversation, onSave, assignedSelection }) {
 }
 
 export default function AgenteMiguelPage() {
-  const { role, docente } = useAuth();
+  const { role, docente, user } = useAuth();
   const location = useLocation();
-  const [chats, setChats] = useState(loadChats);
+  const [chats, setChats] = useState(() => [newChat()]);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [historyError, setHistoryError] = useState("");
+  const [messagesError, setMessagesError] = useState("");
+  const [retry, setRetry] = useState(0);
+  const [historyRetry, setHistoryRetry] = useState(0);
   const [activeId, setActiveId] = useState(() => chats[0].id);
   const [historyOpen, setHistoryOpen] = useState(false);
   const historyToggle = useRef(null);
@@ -143,8 +137,27 @@ export default function AgenteMiguelPage() {
     setChats(previous => saveChatMessages(previous, id, messages));
   }, []);
   useEffect(() => {
-    try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(chats)); } catch { /* El chat sigue funcionando si no hay espacio. */ }
-  }, [chats]);
+    const controller = new AbortController();
+    setHistoryLoading(true); setHistoryError("");
+    listChatConversations({ signal: controller.signal }).then(rows => {
+      if (controller.signal.aborted) return;
+      const loaded = rows.map(row => ({ id: row.id, title: row.titulo || "Nueva conversación", messages: null }));
+      const next = loaded.length ? loaded : [newChat()];
+      setChats(next); setActiveId(next[0].id);
+    }).catch(error => {
+      if (!controller.signal.aborted) setHistoryError(error.message);
+    }).finally(() => { if (!controller.signal.aborted) setHistoryLoading(false); });
+    return () => controller.abort();
+  }, [user?.id_usuario, historyRetry]);
+  useEffect(() => {
+    setMessagesError("");
+    if (historyLoading || historyError || active.messages !== null) return;
+    const controller = new AbortController();
+    getChatMessages(active.id, { signal: controller.signal }).then(messages => {
+      if (!controller.signal.aborted) setChats(previous => previous.map(chat => chat.id === active.id ? { ...chat, messages } : chat));
+    }).catch(error => { if (!controller.signal.aborted) setMessagesError(error.message); });
+    return () => controller.abort();
+  }, [active.id, active.messages, historyLoading, historyError, retry]);
   const startConversation = () => {
     const chat = newChat(); setChats(previous => [chat, ...previous].slice(0, 30)); setActiveId(chat.id);
     setHistoryOpen(false);
@@ -155,19 +168,19 @@ export default function AgenteMiguelPage() {
       <div className="agent-identity"><span className="agent-identity-icon"><Bot size={21} strokeWidth={1.7} aria-hidden="true" /></span><div><h2>Miguel</h2><p>Tu asistente académico</p></div></div>
       <div className="agent-toolbar-actions">
         <button ref={historyToggle} type="button" className={`agent-history-toggle${historyOpen ? " is-active" : ""}`} onClick={() => setHistoryOpen(value => !value)} aria-label="Mostrar u ocultar historial" aria-expanded={historyOpen} aria-controls="agent-history"><PanelLeft size={17} /><span>Historial</span></button>
-        <button type="button" className="agent-new" onClick={startConversation} aria-label="Nueva conversación" title="Nueva conversación"><Plus size={17} /><span>Nueva conversación</span></button>
+        <button type="button" className="agent-new" onClick={startConversation} disabled={historyLoading || Boolean(historyError)} aria-label="Nueva conversación" title="Nueva conversación"><Plus size={17} /><span>Nueva conversación</span></button>
       </div>
     </header>
     <div className="agent-workspace">
       <aside id="agent-history" className="agent-history" hidden={!historyOpen} aria-label="Conversaciones" onKeyDown={event => { if (event.key === "Escape") closeHistory(); }}>
         <div className="agent-history-heading"><h3>Tus conversaciones</h3><button type="button" onClick={closeHistory} aria-label="Cerrar historial"><X size={16} /></button></div>
-        <nav>{chats.map(chat => <button type="button" key={chat.id} aria-current={chat.id === active.id ? "true" : undefined} className={chat.id === active.id ? "active" : ""} onClick={() => {
+        <nav>{historyLoading ? <LoadingBar label="Historial de conversaciones" /> : historyError ? <p role="alert">{historyError}<button type="button" onClick={() => historyError ? setHistoryRetry(value => value + 1) : setRetry(value => value + 1)}>Reintentar</button></p> : chats.map(chat => <button type="button" key={chat.id} aria-current={chat.id === active.id ? "true" : undefined} className={chat.id === active.id ? "active" : ""} onClick={() => {
           setActiveId(chat.id);
           if (window.matchMedia("(max-width: 700px)").matches) closeHistory();
         }} title={chat.title}><MessageSquare size={15} aria-hidden="true" /><span>{chat.title}</span></button>)}</nav>
-        <p>Conversaciones de esta sesión</p>
+        <p>Conversaciones guardadas en tu cuenta</p>
       </aside>
-      {role === "docente" ? <div className="agent-teacher-content"><TeacherAttendance docente={docente} initialSection={location.state?.academicSelection?.seccion}>{selection => <Conversation key={`${active.id}-${selection.seccion}`} conversation={active} onSave={save} assignedSelection={selection} />}</TeacherAttendance></div> : <Conversation key={active.id} conversation={active} onSave={save} />}
+      {historyLoading ? <LoadingBar label="Historial de conversaciones" /> : historyError || messagesError ? <div className="agent-error" role="alert"><p>{historyError || messagesError}</p><button type="button" onClick={() => setRetry(value => value + 1)}>Reintentar</button></div> : active.messages === null ? <LoadingBar label="Mensajes de la conversación" /> : role === "docente" ? <div className="agent-teacher-content"><TeacherAttendance docente={docente} initialSection={location.state?.academicSelection?.seccion}>{selection => <Conversation key={`${active.id}-${selection.seccion}`} conversation={active} onSave={save} assignedSelection={selection} />}</TeacherAttendance></div> : <Conversation key={active.id} conversation={active} onSave={save} />}
     </div>
   </main>;
 }

@@ -26,3 +26,23 @@ export const agentTransport = new DefaultChatTransport({
     return response;
   },
 });
+
+async function getChatHistory(id, { signal } = {}) {
+  const url = new URL(agentEndpoint, window.location.origin);
+  if (id) url.searchParams.set("id", id);
+  let accessToken;
+  try { accessToken = JSON.parse(sessionStorage.getItem("miguel_session"))?.access_token; } catch { /* Sin sesión. */ }
+  const response = await fetch(url, {
+    signal,
+    headers: { Accept: "application/json", ...(apiKey ? { apikey: apiKey } : {}), ...(accessToken ? { Authorization: "Bearer " + accessToken } : {}) },
+  });
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(body?.error || body?.message || "No se pudo cargar el historial del chat.");
+  }
+  const data = await response.json();
+  if (!Array.isArray(data)) throw new Error("El servidor devolvió un historial inválido.");
+  return data;
+}
+export const listChatConversations = options => getChatHistory(null, options);
+export const getChatMessages = (id, options) => getChatHistory(id, options);
