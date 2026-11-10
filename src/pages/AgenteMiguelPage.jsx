@@ -1,13 +1,13 @@
 import ExcelLink from "../components/ExcelLink";
 import { isExcelUrl, excelLinks } from "../utils/excelLinks";
 import LoadingBar from "../components/LoadingBar.jsx";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { isToolUIPart } from "ai";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { ArrowUp, Bot, CalendarCheck, ChevronRight, GraduationCap, MessageSquare, PanelLeft, Plus, RotateCcw, Square, Users, X } from "lucide-react";
-import { agentTransport, listChatConversations, getChatMessages } from "../services/agentService";
+import { createAgentTransport, listChatConversations, getChatMessages } from "../services/agentService";
 import ChatArtifact from "../components/ChatArtifact";
 import { saveChatMessages } from "../utils/chatHistory";
 import { markdownReports, asksForReport } from "../utils/markdownReport";
@@ -66,10 +66,11 @@ function Conversation({ conversation, onSave, assignedSelection }) {
   const bottom = useRef(null);
   const textarea = useRef(null);
   const initialMessages = useRef(conversation.messages);
+  const transport = useMemo(() => createAgentTransport(assignedSelection), [assignedSelection?.anio, assignedSelection?.nivel, assignedSelection?.grado, assignedSelection?.seccion, assignedSelection?.year, assignedSelection?.label]);
   const { messages, sendMessage, status, error, stop, regenerate } = useChat({
     id: conversation.id,
     messages: initialMessages.current,
-    transport: agentTransport,
+    transport,
   });
   const busy = status === "submitted" || status === "streaming";
   useEffect(() => {

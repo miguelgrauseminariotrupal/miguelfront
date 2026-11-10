@@ -1,18 +1,19 @@
 import { DefaultChatTransport } from 'ai';
 import { recoverExpiredSession } from './sessionRecovery.js';
+import { withAgentRequestContext, withoutAgentRequestContext } from '../utils/agentRequestContext.js';
 
 const defaultEndpoint = 'https://fqidwaafiojvcamzmilu.supabase.co/functions/v1/chat';
 export const agentEndpoint = import.meta.env.VITE_AGENT_API_URL?.trim() || defaultEndpoint;
 const apiKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim();
 
-export const agentTransport = new DefaultChatTransport({
+export const createAgentTransport = (assignedSelection) => new DefaultChatTransport({
   api: agentEndpoint,
   headers: apiKey ? { apikey: apiKey } : {},
   // El servidor mantiene el historial; los reintentos conservan el id del mensaje.
   prepareSendMessagesRequest: ({ id, messages }) => {
     const message = messages.findLast((item) => item.role === 'user');
     if (!message) throw new Error('No hay una consulta para enviar al agente.');
-    return { body: { id, message } };
+    return { body: { id, message: withAgentRequestContext(message, assignedSelection) } };
   },
   fetch: async (url, options) => {
     let accessToken;
@@ -45,7 +46,7 @@ async function getChatHistory(id, { signal } = {}) {
   }
   const data = await response.json();
   if (!Array.isArray(data)) throw new Error("El servidor devolvió un historial inválido.");
-  return data;
+  return id ? data.map(withoutAgentRequestContext) : data;
 }
 export const listChatConversations = options => getChatHistory(null, options);
 export const getChatMessages = (id, options) => getChatHistory(id, options);
