@@ -1,5 +1,6 @@
 const RECOVERY_KEY = "miguel_token_reload_attempted";
 export const SESSION_RECOVERY_NOTICE_KEY = "miguel_session_expired";
+export const SESSION_EXPIRED_EVENT = "miguel:session-expired";
 let navigating = false;
 
 export function resetSessionRecovery() {
@@ -25,6 +26,9 @@ export function recoverExpiredSession({ status, message, accessToken }) {
     // Recargar no renueva un token vencido. Pedir una nueva sesión si el error persiste.
     for (const key of ["miguel_session", "miguel_authenticated", "miguel_role", "miguel_agent_chats", RECOVERY_KEY]) sessionStorage.removeItem(key);
     sessionStorage.setItem(SESSION_RECOVERY_NOTICE_KEY, "1");
+    // Cierra la sesión dentro de la app (el router lleva a /login sin recargar) y,
+    // como respaldo, hace una navegación completa por si nadie atiende el evento.
+    if (typeof window.dispatchEvent === "function" && typeof Event === "function") window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
     window.location.replace("/login");
   }
   return true;

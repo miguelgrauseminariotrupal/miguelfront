@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { apiPost } from "../services/api";
 import { getUsuario } from "../services/usuarios.service";
 import { profileNames, sessionFullName } from "../utils/userProfile";
-import { resetSessionRecovery } from "../services/sessionRecovery.js";
+import { resetSessionRecovery, SESSION_EXPIRED_EVENT } from "../services/sessionRecovery.js";
 const SESSION_KEY = "miguel_session";
 const AuthContext = createContext(null);
 function loadSession() {
@@ -42,6 +42,13 @@ export function AuthProvider({ children }) {
     }).catch(() => { /* El nombre devuelto por login sigue disponible si falla la consulta. */ });
     return () => controller.abort();
   }, [userId, accessToken]);
+
+  // El token venció y no se pudo recuperar: se limpia la sesión y PrivateRoute redirige a /login.
+  useEffect(() => {
+    const onExpired = () => setSession(null);
+    window.addEventListener(SESSION_EXPIRED_EVENT, onExpired);
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, onExpired);
+  }, []);
 
   const userFullName = sessionFullName(session);
   const value = useMemo(() => ({
