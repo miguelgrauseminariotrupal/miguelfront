@@ -34,6 +34,7 @@ function DashboardCard({ icon: Icon, label, value, tone, detail }) {
 export default function InicioPage() {
   const { role, docente, userFullName } = useAuth();
   return <main className="page-content home-page">
+    <div className="home-page__content">
     <header className="dashboard-welcome">
       <span>Tu espacio de cada día</span>
       <h1>{userFullName ? `Hola, ${userFullName}` : "Hola"}</h1>
@@ -45,6 +46,7 @@ export default function InicioPage() {
       <ChevronRight size={23} />
     </Link>
     {role === "docente" ? <TeacherAttendance docente={docente}>{selection => <HomeIndicators key={selection.seccion} assignedSelection={selection} />}</TeacherAttendance> : <HomeIndicators />}
+    </div>
   </main>;
 }
 
