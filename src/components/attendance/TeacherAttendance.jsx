@@ -31,6 +31,7 @@ export default function TeacherAttendance({ docente, children, initialSection })
         const section = await getSeccion(id, options);
         const grade = await getGrado(section.id_grado, options);
         const level = await getNivel(grade.id_nivel, options);
+        if (level.id_anio_lectivo == null) return null;
         const year = await getAnioLectivo(level.id_anio_lectivo, options);
         if ([section, grade, level, year].some(item => item.estado === false)) return null;
         return {
@@ -64,7 +65,7 @@ export default function TeacherAttendance({ docente, children, initialSection })
   if (loading) return <div className="teacher-section-loading" role="status"><p>Cargando tu sección asignada…</p><LoadingBar label="Cargando sección asignada" /></div>;
   if (error) return <p role="alert">{error}</p>;
   if (!teacherId) return <p role="status">Tu usuario no está vinculado a un docente. Solicita al administrador que revise la vinculación.</p>;
-  if (!sections.length) return <p role="status">No tienes una sección activa asignada como docente responsable. Solicita al administrador que revise la programación de secciones.</p>;
+  if (!sections.length) return <p role="status">No tienes una sección activa asignada como docente responsable con un año lectivo asociado. Solicita al administrador que revise la programación de secciones.</p>;
   const selection = sections.find(item => item.seccion === selected);
   return <>
     <section className="teacher-section-summary" aria-label="Sección asignada">
