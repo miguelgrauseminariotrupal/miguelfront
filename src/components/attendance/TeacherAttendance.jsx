@@ -1,10 +1,6 @@
 import LoadingBar from "../LoadingBar.jsx";
 import { useEffect, useState } from "react";
 import { getProgramacionSecciones } from "../../services/programacionSecciones.service";
-import { getSeccion } from "../../services/secciones.service";
-import { getGrado } from "../../services/grados.service";
-import { getNivel } from "../../services/niveles.service";
-import { getAnioLectivo } from "../../services/aniosLectivos.service";
 import AttendanceWorkspace from "./AttendanceWorkspace";
 
 export default function TeacherAttendance({ docente, children, initialSection }) {
@@ -16,31 +12,31 @@ export default function TeacherAttendance({ docente, children, initialSection })
 
   useEffect(() => {
     const controller = new AbortController();
-    const options = { signal: controller.signal };
     setSections([]);
     setSelected("");
     setError("");
     setLoading(true);
     async function load() {
       if (!teacherId) return;
-      const programs = await getProgramacionSecciones({ id_docente_responsable: teacherId, ...options });
-      const ids = [...new Set(programs
+      const programs = await getProgramacionSecciones({ id_docente_responsable: teacherId, signal: controller.signal });
+      // Una sola llamada: cada programación ya trae sección, grado, nivel y año lectivo.
+      const seen = new Set();
+      const records = programs
         .filter(item => String(item.id_docente_responsable) === String(teacherId))
-        .map(item => item.id_seccion))];
-      const records = await Promise.all(ids.map(async id => {
-        const section = await getSeccion(id, options);
-        const grade = await getGrado(section.id_grado, options);
-        const level = await getNivel(grade.id_nivel, options);
-        if (level.id_anio_lectivo == null) return null;
-        const year = await getAnioLectivo(level.id_anio_lectivo, options);
-        if ([section, grade, level, year].some(item => item.estado === false)) return null;
-        return {
-          anio: String(year.id_anio_lectivo), nivel: String(level.id_nivel),
-          grado: String(grade.id_grado), seccion: String(section.id_seccion),
-          year: Number(year.anio),
-          label: `${year.anio} · ${level.nombre} · ${grade.nombre} · ${section.nombre}`,
-        };
-      }));
+        .map(item => {
+          const { seccion: section, grado: grade, nivel: level, anio_lectivo: year } = item;
+          if (![section, grade, level, year].every(Boolean)) return null;
+          if (level.id_anio_lectivo == null) return null;
+          if ([section, grade, level, year].some(entity => entity.estado === false)) return null;
+          if (seen.has(section.id_seccion)) return null;
+          seen.add(section.id_seccion);
+          return {
+            anio: String(year.id_anio_lectivo), nivel: String(level.id_nivel),
+            grado: String(grade.id_grado), seccion: String(section.id_seccion),
+            year: Number(year.anio),
+            label: `${year.anio} · ${level.nombre} · ${grade.nombre} · ${section.nombre}`,
+          };
+        });
       if (controller.signal.aborted) return;
       const assigned = records.filter(Boolean).sort((a, b) => b.year - a.year || a.label.localeCompare(b.label, "es"));
       setSections(assigned);
