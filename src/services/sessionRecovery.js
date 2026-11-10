@@ -1,8 +1,10 @@
 const RECOVERY_KEY = "miguel_token_reload_attempted";
+export const SESSION_RECOVERY_NOTICE_KEY = "miguel_session_expired";
 let navigating = false;
 
 export function resetSessionRecovery() {
   sessionStorage.removeItem(RECOVERY_KEY);
+  sessionStorage.removeItem(SESSION_RECOVERY_NOTICE_KEY);
   navigating = false;
 }
 
@@ -22,6 +24,7 @@ export function recoverExpiredSession({ status, message, accessToken }) {
   } else {
     // Recargar no renueva un token vencido. Pedir una nueva sesión si el error persiste.
     for (const key of ["miguel_session", "miguel_authenticated", "miguel_role", "miguel_agent_chats", RECOVERY_KEY]) sessionStorage.removeItem(key);
+    sessionStorage.setItem(SESSION_RECOVERY_NOTICE_KEY, "1");
     window.location.replace("/login");
   }
   return true;

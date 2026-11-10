@@ -2,12 +2,14 @@ import { ArrowRight, Eye, EyeOff, LockKeyhole, UserRound } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { SESSION_RECOVERY_NOTICE_KEY } from "../services/sessionRecovery.js";
 
 export default function LoginPage() {
   const [values, setValues] = useState({ username: "", password: "" });
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [sessionDisconnected] = useState(() => sessionStorage.getItem(SESSION_RECOVERY_NOTICE_KEY) === "1");
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -56,6 +58,7 @@ export default function LoginPage() {
             <span className="brand__accent" aria-hidden="true" /><p className="brand__message">¡Espero que tengas un excelente día!</p>
           </header>
           <p className="login-access-note">Acceso para docentes y administradores</p>
+          {sessionDisconnected && <div className="login-session-notice" role="alert"><strong>Se perdió la conexión con tu sesión.</strong><p>Por seguridad, vuelve a iniciar sesión para continuar.</p></div>}
           <form className="login-form" onSubmit={handleSubmit} noValidate>
             <div className={`field ${errors.username ? "is-invalid" : ""}`}>
               <label htmlFor="username">Usuario</label><div className="input-wrap"><UserRound /><input id="username" name="username" placeholder="Ingresa tu usuario" autoComplete="username" value={values.username} onChange={handleChange} aria-invalid={Boolean(errors.username)} aria-describedby="username-error" /></div>

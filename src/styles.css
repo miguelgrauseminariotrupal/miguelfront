@@ -1447,6 +1447,9 @@ img, svg { max-width: 100%; }
 .user-role--docente { background: #e0f2fe; color: #075985; }
 .user-role--admin { background: #ede9fe; color: #5b21b6; }
 .login-access-note { margin: 22px 0 0; color: var(--color-text-secondary); font-size: .8rem; text-align: center; line-height: 1.5; }
+.login-session-notice { margin-top: 18px; padding: 14px 16px; border: 1px solid #f2cf85; border-radius: 10px; background: #fff8e8; color: #704b0b; font-size: .82rem; line-height: 1.5; }
+.login-session-notice strong { display: block; }
+.login-session-notice p { margin: 5px 0 0; }
 @media (max-width: 480px) {
   .teacher-section-summary { padding: 14px 16px; gap: 6px; }
   .teacher-section-summary__value { flex-basis: 100%; font-size: .9rem; }

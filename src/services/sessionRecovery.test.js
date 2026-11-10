@@ -25,6 +25,7 @@ test('si el token sigue rechazado tras recargar, vuelve al login sin bucle', asy
   assert.equal(s.recoverExpiredSession(expired),true);
   assert.deepEqual(s.events,['/login']);
   assert.equal(s.values.has('miguel_session'),false);
+  assert.equal(s.values.get(s.SESSION_RECOVERY_NOTICE_KEY),'1');
 });
 
 test('ignora errores ajenos al token, peticiones anónimas y respuestas de sesiones antiguas', async () => {
@@ -36,7 +37,9 @@ test('ignora errores ajenos al token, peticiones anónimas y respuestas de sesio
 test('una nueva autenticación restablece la recuperación y admite mensajes en inglés', async () => {
   const s = await scenario();
   s.values.set('miguel_token_reload_attempted','1');
+  s.values.set(s.SESSION_RECOVERY_NOTICE_KEY,'1');
   s.resetSessionRecovery();
+  assert.equal(s.values.has(s.SESSION_RECOVERY_NOTICE_KEY),false);
   assert.equal(s.recoverExpiredSession({...expired,message:'JWT expired'}),true);
   assert.deepEqual(s.events,['reload']);
 });
