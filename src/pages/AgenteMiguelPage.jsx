@@ -178,6 +178,7 @@ export default function AgenteMiguelPage() {
     setHistoryOpen(false);
   };
   const closeHistory = () => { setHistoryOpen(false); historyToggle.current?.focus(); };
+  const renderConversation = selection => historyLoading ? <LoadingBar label="Historial de conversaciones" /> : historyError || messagesError ? <div className="agent-error" role="alert"><p>{historyError || messagesError}</p><button type="button" onClick={() => setRetry(value => value + 1)}>Reintentar</button></div> : active.messages === null ? <LoadingBar label="Mensajes de la conversación" /> : selection ? <Conversation key={`${active.id}-${selection.seccion}`} conversation={active} onSave={save} assignedSelection={selection} /> : <Conversation key={active.id} conversation={active} onSave={save} />;
   return <main className="page-content agent-page">
     <header className="agent-toolbar">
       <div className="agent-identity"><span className="agent-identity-icon"><Bot size={21} strokeWidth={1.7} aria-hidden="true" /></span><div><h2>Miguel</h2><p>Tu asistente académico</p></div></div>
@@ -195,7 +196,10 @@ export default function AgenteMiguelPage() {
         }} title={chat.title}><MessageSquare size={15} aria-hidden="true" /><span>{chat.title}</span></button>)}</nav>
         <p>Conversaciones guardadas en tu cuenta</p>
       </aside>
-      {historyLoading ? <LoadingBar label="Historial de conversaciones" /> : historyError || messagesError ? <div className="agent-error" role="alert"><p>{historyError || messagesError}</p><button type="button" onClick={() => setRetry(value => value + 1)}>Reintentar</button></div> : active.messages === null ? <LoadingBar label="Mensajes de la conversación" /> : role === "docente" ? <div className="agent-teacher-content"><TeacherAttendance docente={docente} initialSection={location.state?.academicSelection?.seccion}>{selection => <Conversation key={`${active.id}-${selection.seccion}`} conversation={active} onSave={save} assignedSelection={selection} />}</TeacherAttendance></div> : <Conversation key={active.id} conversation={active} onSave={save} />}
+      {role === "docente"
+        // La sección asignada se carga en paralelo con el historial (antes esperaba a que terminaran la lista y el detalle).
+        ? <div className="agent-teacher-content"><TeacherAttendance docente={docente} initialSection={location.state?.academicSelection?.seccion}>{selection => renderConversation(selection)}</TeacherAttendance></div>
+        : renderConversation(null)}
     </div>
   </main>;
 }
