@@ -6,7 +6,7 @@ import { useChat } from "@ai-sdk/react";
 import { isToolUIPart } from "ai";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { ArrowUp, Bot, CalendarCheck, ChevronRight, GraduationCap, MessageSquare, PanelLeft, Plus, RotateCcw, Square, Users, X } from "lucide-react";
+import { ArrowUp, Bot, FileSpreadsheet, CalendarCheck, ChevronRight, GraduationCap, MessageSquare, PanelLeft, Plus, RotateCcw, Square, Users, X } from "lucide-react";
 import { createAgentTransport, listChatConversations, getChatMessages } from "../services/agentService";
 import ChatArtifact from "../components/ChatArtifact";
 import { saveChatMessages } from "../utils/chatHistory";
@@ -21,6 +21,11 @@ const LABELS = {
   crear_grafico: "Preparando gráfico",
   mostrar_grafico: "Preparando gráfico",
   graficar: "Preparando gráfico",
+  mostrar_grafico_indicador: "Preparando gráficos del indicador",
+  listar_competencias: "Consultando competencias",
+  exportar_resumen_bimestre: "Generando reporte Excel",
+  exportar_evolucion_bimestre: "Generando reporte Excel",
+  exportar_resumen_asistencia: "Generando reporte Excel",
   listar_anios_lectivos: "Consultando años lectivos",
   listar_niveles: "Consultando niveles",
   listar_grados: "Consultando grados",
@@ -41,7 +46,15 @@ function toolExcelLinks(part) {
   if (!isToolUIPart(part) || part.state !== "output-available" || part.output?.error) return [];
   return excelLinks(part.output, (part.toolName || part.type.replace(/^tool-/, "")) === "exportar_excel");
 }
-function MessagePart({ part, prompt, allowTableExport, complete, parts, partIndex }) {
+function IndicatorCharts({ output, prompt, onExport, canExport }) {
+  const charts = Array.isArray(output?.graficos) ? output.graficos : [];
+  return <>
+    {charts.map((chart, index) => <ChatArtifact key={index} kind="chart" output={chart} prompt={prompt} />)}
+    {output?.omitidos > 0 && <p className="agent-chart-note">Se muestran {charts.length} gráficos; hay {output.omitidos} más. Pídeme filtrar por grado, bimestre o competencia.</p>}
+    {output?.exportar?.mensaje && <button type="button" className="agent-export-excel" disabled={!canExport} onClick={() => onExport(output.exportar.mensaje)}><FileSpreadsheet size={16} aria-hidden="true" />Exportar a Excel</button>}
+  </>;
+}
+function MessagePart({ part, prompt, allowTableExport, complete, parts, partIndex, onExport, canExport }) {
   if (part.type === "text") {
     const reports = allowTableExport && complete && asksForReport(prompt) ? markdownReports(part.text) : [];
     return <><div className="agent-markdown"><Markdown remarkPlugins={[remarkGfm]} components={{ a: ({ href, children }) => parts.some(item => toolExcelLinks(item).includes(href)) ? null : isExcelUrl(href) ? <ExcelLink href={href} /> : <a href={href} target="_blank" rel="noopener noreferrer">{children}</a> }}>{part.text}</Markdown></div>{reports.map((report, index) => <ChatArtifact key={index} kind="report" output={report} prompt={prompt} />)}</>;
@@ -54,6 +67,7 @@ function MessagePart({ part, prompt, allowTableExport, complete, parts, partInde
     const files = toolExcelLinks(part);
     if (files.length) return <>{files.filter(href => !parts.slice(0, partIndex).some(item => toolExcelLinks(item).includes(href))).map(href => <ExcelLink key={href} href={href} />)}</>;
     if (asksForReport(prompt) && ["exportar_excel", "generar_reporte", "exportar_reporte", "exportar_pdf", "exportar_word", "exportar_csv"].includes(name)) return <ChatArtifact kind="report" output={{ ...part.output, ...(name === "exportar_pdf" ? { formato: "pdf" } : name === "exportar_word" ? { formato: "docx" } : name === "exportar_csv" ? { formato: "csv" } : {}) }} prompt={prompt} />;
+    if (name === "mostrar_grafico_indicador") return <IndicatorCharts output={part.output} prompt={prompt} onExport={onExport} canExport={canExport} />;
     if (["generar_grafico", "crear_grafico", "mostrar_grafico", "graficar"].includes(name)) return <ChatArtifact kind="chart" output={part.output} prompt={prompt} />;
   }
   return <div className={`agent-tool${error ? " agent-tool-error" : ""}`} role="status">
@@ -101,7 +115,7 @@ function Conversation({ conversation, onSave, assignedSelection }) {
       </div>}
       {messages.map((message, messageIndex) => <article key={message.id} className={`agent-message agent-message-${message.role}`}>
         <span className={`agent-message-author${message.role === "user" ? " sr-only" : ""}`}>{message.role === "user" ? "Tú" : <><Bot size={16} aria-hidden="true" /> Miguel</>}</span>
-        {message.parts.map((part, index) => <MessagePart key={index} parts={message.parts} partIndex={index} part={part} complete={!busy || messageIndex < messages.length - 1} allowTableExport={message.role === "assistant" && !message.parts.some(item => isToolUIPart(item) && item.state === "output-available" && ["exportar_excel", "generar_reporte", "exportar_reporte", "exportar_pdf", "exportar_word", "exportar_csv"].includes(item.toolName || item.type.replace(/^tool-/, "")))} prompt={messages.slice(0, messageIndex).findLast(item => item.role === "user")?.parts.filter(item => item.type === "text").map(item => item.text).join(" ") || ""} />)}
+        {message.parts.map((part, index) => <MessagePart key={index} onExport={send} canExport={!busy} parts={message.parts} partIndex={index} part={part} complete={!busy || messageIndex < messages.length - 1} allowTableExport={message.role === "assistant" && !message.parts.some(item => isToolUIPart(item) && item.state === "output-available" && ["exportar_excel", "generar_reporte", "exportar_reporte", "exportar_pdf", "exportar_word", "exportar_csv"].includes(item.toolName || item.type.replace(/^tool-/, "")))} prompt={messages.slice(0, messageIndex).findLast(item => item.role === "user")?.parts.filter(item => item.type === "text").map(item => item.text).join(" ") || ""} />)}
       </article>)}
       {busy && <LoadingBar label="Preparando respuesta" />}
       {error && <div className="agent-error" role="alert"><p>{error.message}</p><button type="button" disabled={busy} onClick={() => regenerate()}><RotateCcw size={14} />Reintentar</button></div>}

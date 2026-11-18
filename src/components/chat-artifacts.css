@@ -17,3 +17,7 @@
 .chat-report-formats select { padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; background: white; color: #24364b; }
 .chat-report-formats small { flex-basis: 100%; }
 .chat-report-formats button { margin-top: 0; }
+.agent-export-excel { display: inline-flex; align-items: center; gap: 8px; margin: 4px 0 12px; padding: 10px 16px; border: 1px solid #174e83; border-radius: 8px; background: #fff; color: #174e83; font-weight: 600; cursor: pointer; }
+.agent-export-excel:hover:not(:disabled) { background: #174e83; color: #fff; }
+.agent-export-excel:disabled { opacity: .6; cursor: wait; }
+.agent-chart-note { font-size: 13px; color: #64748b; }

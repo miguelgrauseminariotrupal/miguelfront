@@ -1,4 +1,4 @@
-const types = { circular: "pie", circulos: "pie", pastel: "pie", pie: "pie", dona: "doughnut", doughnut: "doughnut", barras: "bar", bar: "bar", lineas: "line", line: "line" };
+const types = { circular: "pie", circulos: "pie", pastel: "pie", torta: "pie", pie: "pie", dona: "doughnut", doughnut: "doughnut", barras: "bar", bar: "bar", lineas: "line", line: "line" };
 
 export function chartType(value, prompt = "") {
   if (value) return types[String(value).normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase()] || null;
