@@ -120,3 +120,29 @@ export function extractList(response) {
   if (list) return list;
   throw new ApiError("La respuesta del servidor no contiene una lista reconocible.");
 }
+
+// Descarga un archivo (Excel, etc.) autenticado: devuelve { blob, filename }.
+export async function apiDownload(path, { params = {}, signal } = {}) {
+  const url = new URL(`${API_URL}${path.startsWith("/") ? path : `/${path}`}`);
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== "" && value !== null && value !== undefined) url.searchParams.set(key, value);
+  });
+  let accessToken;
+  try { accessToken = JSON.parse(sessionStorage.getItem("miguel_session"))?.access_token; } catch { /* Sin sesión. */ }
+  let response;
+  try {
+    response = await fetch(url, { headers: { ...(API_KEY ? { apikey: API_KEY } : {}), ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) }, signal });
+  } catch (error) {
+    if (error.name === "AbortError") throw error;
+    throw new ApiError("No se pudo conectar con el servidor.", { cause: error });
+  }
+  if (!response.ok) {
+    let message = "";
+    try { const raw = (await response.text()).trim(); try { const body = JSON.parse(raw); message = body?.error || body?.message || raw; } catch { message = raw; } } catch { /* Sin cuerpo. */ }
+    if (recoverExpiredSession({ status: response.status, message, accessToken })) return new Promise(() => {});
+    throw new ApiError(message || `El servidor respondió con un error HTTP ${response.status}.`, { status: response.status });
+  }
+  const disposition = response.headers.get("Content-Disposition") || "";
+  const filename = /filename="?([^";]+)"?/i.exec(disposition)?.[1] || "reporte.xlsx";
+  return { blob: await response.blob(), filename };
+}

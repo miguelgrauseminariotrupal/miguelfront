@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import DownloadScreenExcel from "./DownloadScreenExcel";
+import AttendanceReportButton from "../attendance/AttendanceReportButton";
 
 const titles = { "/inicio": "Inicio", "/agente-miguel": "Agente Miguel", "/asistencia": "Asistencia", "/evaluaciones": "Evaluaciones", "/evaluaciones/calificaciones": "Calificaciones", "/evaluaciones/configuracion": "Plan de evaluación", "/generar-matricula-curso": "Generar Matrícula - Curso", "/configuracion": "Configuración", "/docentes": "Docentes", "/alumnos": "Alumnos", "/matricula": "Matrícula", "/cursos": "Cursos", "/programacion": "Registro Clase" };
 
@@ -28,7 +29,7 @@ export default function Header({ onOpenMenu, navigationOpen }) {
         <button className="menu-button" type="button" aria-label="Abrir o contraer menú principal" aria-expanded={navigationOpen} aria-controls="main-navigation" onClick={onOpenMenu}><Menu size={22} /></button>
         <h1>{titles[location.pathname] ?? "Miguel"}</h1>
       </div>
-      <div className="app-header-actions">{location.pathname !== "/agente-miguel" && <DownloadScreenExcel />}<div className="user-menu" ref={menuRef}>
+      <div className="app-header-actions">{location.pathname === "/asistencia" && <AttendanceReportButton />}{location.pathname !== "/agente-miguel" && <DownloadScreenExcel />}<div className="user-menu" ref={menuRef}>
         <button className="user-menu__trigger" type="button" aria-expanded={menuOpen} onClick={() => setMenuOpen((value) => !value)}>
           <span className="user-avatar">{displayName.charAt(0).toUpperCase()}</span><span className="user-identity"><span className="user-name" title={displayName}>{displayName}</span><span className={`user-role user-role--${role}`}>{role === "admin" ? "Administrador" : "Docente"}</span></span><ChevronDown size={16} />
         </button>
