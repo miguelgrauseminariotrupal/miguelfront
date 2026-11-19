@@ -1,5 +1,5 @@
 const CONTEXT_MARKER = '<!-- miguel-request-context:v1 -->';
-const RESPONSE_GUIDANCE = 'Si la consulta contiene una orden clara, atiéndela directamente: no antepongas un saludo de presentación, un menú ni una lista de capacidades. Presenta las opciones únicamente si el usuario pide ayuda, pregunta qué puedes hacer o no expresa una solicitud concreta. Pregunta solo por información imprescindible que no esté disponible en el contexto o el historial.';
+const RESPONSE_GUIDANCE = 'EXCEPCIÓN: si el mensaje del usuario es solo un saludo (por ejemplo "Hola") o pregunta qué puedes hacer, ignora el resto de este contexto: salúdalo, preséntate y muestra tus funciones, sin pedir bimestre, competencias ni otros datos y sin llamar herramientas. Si la consulta contiene una orden clara, atiéndela directamente: no antepongas un saludo de presentación, un menú ni una lista de capacidades. Presenta las opciones únicamente si el usuario pide ayuda, pregunta qué puedes hacer o no expresa una solicitud concreta. Pregunta solo por información imprescindible que no esté disponible en el contexto o el historial.';
 
 export function withAgentRequestContext(message, selection) {
   const context = [RESPONSE_GUIDANCE];
