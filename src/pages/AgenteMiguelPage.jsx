@@ -54,10 +54,12 @@ function formatMessageTime(iso) {
   const time = timeFormat.format(date);
   return dayFormat.format(date) === dayFormat.format(new Date()) ? time : `${dayFormat.format(date)} · ${time}`;
 }
+const GRADE_LEGEND = [["C", "En inicio"], ["B", "En proceso"], ["A", "Logro esperado"], ["AD", "Logro destacado"]];
 function IndicatorCharts({ output, prompt, onExport, canExport }) {
   const charts = Array.isArray(output?.graficos) ? output.graficos : [];
   return <>
     {charts.map((chart, index) => <ChatArtifact key={index} kind="chart" output={chart} prompt={prompt} />)}
+    {charts.length > 0 && <ul className="agent-grade-legend" aria-label="Significado de los valores">{GRADE_LEGEND.map(([code, text]) => <li key={code}><strong>{code}</strong> {text}</li>)}</ul>}
     {output?.omitidos > 0 && <p className="agent-chart-note">Se muestran {charts.length} gráficos; hay {output.omitidos} más. Pídeme filtrar por grado, bimestre o competencia.</p>}
     {output?.exportar?.mensaje && <button type="button" className="agent-export-excel" disabled={!canExport} onClick={() => onExport(output.exportar.mensaje)}><FileSpreadsheet size={16} aria-hidden="true" />Exportar a Excel</button>}
   </>;

@@ -23,3 +23,4 @@
 .agent-chart-note { font-size: 13px; color: #64748b; }
 .agent-message-time { display: block; margin-top: 4px; font-size: .7rem; color: #94a3b8; line-height: 1.2; }
 .agent-message-user .agent-message-time { text-align: right; }
+.agent-grade-legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 4px 0 12px; padding: 10px 14px; list-style: none; border: 1px solid #dce6f0; border-radius: 10px; background: #f8fafc; font-size: 13px; color: #24364b; max-width: 680px; }
