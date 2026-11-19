@@ -46,6 +46,14 @@ function toolExcelLinks(part) {
   if (!isToolUIPart(part) || part.state !== "output-available" || part.output?.error) return [];
   return excelLinks(part.output, (part.toolName || part.type.replace(/^tool-/, "")) === "exportar_excel");
 }
+const timeFormat = new Intl.DateTimeFormat("es-PE", { hour: "2-digit", minute: "2-digit", hour12: true, timeZone: "America/Lima" });
+const dayFormat = new Intl.DateTimeFormat("es-PE", { day: "2-digit", month: "2-digit", timeZone: "America/Lima" });
+function formatMessageTime(iso) {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  const time = timeFormat.format(date);
+  return dayFormat.format(date) === dayFormat.format(new Date()) ? time : `${dayFormat.format(date)} · ${time}`;
+}
 function IndicatorCharts({ output, prompt, onExport, canExport }) {
   const charts = Array.isArray(output?.graficos) ? output.graficos : [];
   return <>
@@ -80,6 +88,15 @@ function Conversation({ conversation, onSave, assignedSelection }) {
   const bottom = useRef(null);
   const textarea = useRef(null);
   const initialMessages = useRef(conversation.messages);
+  // Hora de cada mensaje: la guardada (historial) o la del momento en que apareció en esta sesión.
+  const initialIds = useRef(new Set(initialMessages.current.map(item => item.id)));
+  const seenAt = useRef(new Map());
+  const timeOf = message => {
+    if (message.metadata?.creadoEn) return message.metadata.creadoEn;
+    if (initialIds.current.has(message.id)) return null;
+    if (!seenAt.current.has(message.id)) seenAt.current.set(message.id, new Date().toISOString());
+    return seenAt.current.get(message.id);
+  };
   const transport = useMemo(() => createAgentTransport(assignedSelection), [assignedSelection?.anio, assignedSelection?.nivel, assignedSelection?.grado, assignedSelection?.seccion, assignedSelection?.year, assignedSelection?.label]);
   const { messages, sendMessage, status, error, stop, regenerate } = useChat({
     id: conversation.id,
@@ -116,6 +133,7 @@ function Conversation({ conversation, onSave, assignedSelection }) {
       {messages.map((message, messageIndex) => <article key={message.id} className={`agent-message agent-message-${message.role}`}>
         <span className={`agent-message-author${message.role === "user" ? " sr-only" : ""}`}>{message.role === "user" ? "Tú" : <><Bot size={16} aria-hidden="true" /> Miguel</>}</span>
         {message.parts.map((part, index) => <MessagePart key={index} onExport={send} canExport={!busy} parts={message.parts} partIndex={index} part={part} complete={!busy || messageIndex < messages.length - 1} allowTableExport={message.role === "assistant" && !message.parts.some(item => isToolUIPart(item) && item.state === "output-available" && ["exportar_excel", "generar_reporte", "exportar_reporte", "exportar_pdf", "exportar_word", "exportar_csv"].includes(item.toolName || item.type.replace(/^tool-/, "")))} prompt={messages.slice(0, messageIndex).findLast(item => item.role === "user")?.parts.filter(item => item.type === "text").map(item => item.text).join(" ") || ""} />)}
+        {timeOf(message) && <time className="agent-message-time" dateTime={timeOf(message)}>{formatMessageTime(timeOf(message))}</time>}
       </article>)}
       {busy && <LoadingBar label="Preparando respuesta" />}
       {error && <div className="agent-error" role="alert"><p>{error.message}</p><button type="button" disabled={busy} onClick={() => regenerate()}><RotateCcw size={14} />Reintentar</button></div>}

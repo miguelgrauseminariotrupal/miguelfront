@@ -21,3 +21,5 @@
 .agent-export-excel:hover:not(:disabled) { background: #174e83; color: #fff; }
 .agent-export-excel:disabled { opacity: .6; cursor: wait; }
 .agent-chart-note { font-size: 13px; color: #64748b; }
+.agent-message-time { display: block; margin-top: 4px; font-size: .7rem; color: #94a3b8; line-height: 1.2; }
+.agent-message-user .agent-message-time { text-align: right; }

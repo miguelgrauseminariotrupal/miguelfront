@@ -18,7 +18,7 @@ export function normalizeChart(output, prompt) {
   const labels = data.etiquetas || data.labels || (Array.isArray(points) ? points.map(item => item.etiqueta ?? item.label) : null);
   const series = data.series || (Array.isArray(points) ? [{ nombre: "Cantidad", valores: points.map(item => item.valor ?? item.value) }] : [{ nombre: "Cantidad", valores: data.valores || data.values }]);
   if (!Array.isArray(labels) || !labels.length || labels.some(label => typeof label !== "string") || !Array.isArray(series) || !series.length) throw new Error("El gráfico necesita etiquetas y valores.");
-  const normalized = series.map(item => ({ name: String(item.nombre || item.name || "Cantidad"), values: item.valores || item.values || item.data }));
+  const normalized = series.map(item => ({ name: String(item.nombre || item.name || "Cantidad"), values: item.valores || item.values || item.data, counts: Array.isArray(item.cantidades) && item.cantidades.length === labels.length ? item.cantidades : null }));
   if (normalized.some(item => !Array.isArray(item.values) || item.values.length !== labels.length || item.values.some(value => typeof value !== "number" || !Number.isFinite(value)))) throw new Error("Los valores del gráfico deben ser números y coincidir con sus etiquetas.");
   if (["pie", "doughnut"].includes(type) && (normalized.length !== 1 || normalized[0].values.some(value => value < 0))) throw new Error("El gráfico circular necesita una serie con valores positivos o cero.");
   return { title: String(data.titulo || data.title || "Gráfico"), type, labels, series: normalized };
