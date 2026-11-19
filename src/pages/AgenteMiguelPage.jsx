@@ -6,6 +6,7 @@ import { useChat } from "@ai-sdk/react";
 import { isToolUIPart } from "ai";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { formatAgentMessage } from "../utils/formatAgentMessage";
 import { ArrowUp, Bot, FileSpreadsheet, CalendarCheck, ChevronRight, GraduationCap, MessageSquare, PanelLeft, Plus, RotateCcw, Square, Users, X } from "lucide-react";
 import { createAgentTransport, listChatConversations, getChatMessages } from "../services/agentService";
 import ChatArtifact from "../components/ChatArtifact";
@@ -64,10 +65,10 @@ function IndicatorCharts({ output, prompt, onExport, canExport }) {
     {output?.exportar?.mensaje && <button type="button" className="agent-export-excel" disabled={!canExport} onClick={() => onExport(output.exportar.mensaje)}><FileSpreadsheet size={16} aria-hidden="true" />Exportar a Excel</button>}
   </>;
 }
-function MessagePart({ part, prompt, allowTableExport, complete, parts, partIndex, onExport, canExport }) {
+function MessagePart({ part, isAssistant, prompt, allowTableExport, complete, parts, partIndex, onExport, canExport }) {
   if (part.type === "text") {
     const reports = allowTableExport && complete && asksForReport(prompt) ? markdownReports(part.text) : [];
-    return <><div className="agent-markdown"><Markdown remarkPlugins={[remarkGfm]} components={{ a: ({ href, children }) => parts.some(item => toolExcelLinks(item).includes(href)) ? null : isExcelUrl(href) ? <ExcelLink href={href} /> : <a href={href} target="_blank" rel="noopener noreferrer">{children}</a> }}>{part.text}</Markdown></div>{reports.map((report, index) => <ChatArtifact key={index} kind="report" output={report} prompt={prompt} />)}</>;
+    return <><div className="agent-markdown"><Markdown remarkPlugins={[remarkGfm]} components={{ a: ({ href, children }) => parts.some(item => toolExcelLinks(item).includes(href)) ? null : isExcelUrl(href) ? <ExcelLink href={href} /> : <a href={href} target="_blank" rel="noopener noreferrer">{children}</a> }}>{isAssistant ? formatAgentMessage(part.text) : part.text}</Markdown></div>{reports.map((report, index) => <ChatArtifact key={index} kind="report" output={report} prompt={prompt} />)}</>;
   }
   if (!isToolUIPart(part)) return null;
   const name = part.toolName || part.type.replace(/^tool-/, "");
@@ -134,7 +135,7 @@ function Conversation({ conversation, onSave, assignedSelection }) {
       </div>}
       {messages.map((message, messageIndex) => <article key={message.id} className={`agent-message agent-message-${message.role}`}>
         <span className={`agent-message-author${message.role === "user" ? " sr-only" : ""}`}>{message.role === "user" ? "Tú" : <><Bot size={16} aria-hidden="true" /> Miguel</>}</span>
-        {message.parts.map((part, index) => <MessagePart key={index} onExport={send} canExport={!busy} parts={message.parts} partIndex={index} part={part} complete={!busy || messageIndex < messages.length - 1} allowTableExport={message.role === "assistant" && !message.parts.some(item => isToolUIPart(item) && item.state === "output-available" && ["exportar_excel", "generar_reporte", "exportar_reporte", "exportar_pdf", "exportar_word", "exportar_csv"].includes(item.toolName || item.type.replace(/^tool-/, "")))} prompt={messages.slice(0, messageIndex).findLast(item => item.role === "user")?.parts.filter(item => item.type === "text").map(item => item.text).join(" ") || ""} />)}
+        {message.parts.map((part, index) => <MessagePart isAssistant={message.role === "assistant"} key={index} onExport={send} canExport={!busy} parts={message.parts} partIndex={index} part={part} complete={!busy || messageIndex < messages.length - 1} allowTableExport={message.role === "assistant" && !message.parts.some(item => isToolUIPart(item) && item.state === "output-available" && ["exportar_excel", "generar_reporte", "exportar_reporte", "exportar_pdf", "exportar_word", "exportar_csv"].includes(item.toolName || item.type.replace(/^tool-/, "")))} prompt={messages.slice(0, messageIndex).findLast(item => item.role === "user")?.parts.filter(item => item.type === "text").map(item => item.text).join(" ") || ""} />)}
         {timeOf(message) && <time className="agent-message-time" dateTime={timeOf(message)}>{formatMessageTime(timeOf(message))}</time>}
       </article>)}
       {busy && <LoadingBar label="Preparando respuesta" />}

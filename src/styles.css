@@ -1343,6 +1343,10 @@ img, svg { max-width: 100%; }
 .agent-markdown { overflow-x: auto; overflow-wrap: anywhere; }
 .agent-markdown > :first-child { margin-top: 0; }
 .agent-markdown > :last-child { margin-bottom: 0; }
+.agent-markdown p { margin: 0 0 14px; white-space: pre-line; }
+.agent-markdown ol, .agent-markdown ul { margin: 10px 0 20px; padding-left: 1.75rem; }
+.agent-markdown li { padding-left: 4px; margin: 7px 0; }
+.agent-markdown li > p { margin-bottom: 7px; }
 .agent-message-user .agent-markdown p { white-space: pre-wrap; }
 .agent-markdown h1, .agent-markdown h2, .agent-markdown h3 { margin: 22px 0 10px; font-size: 1rem; line-height: 1.4; font-weight: 650; }
 .agent-markdown a { color: var(--color-primary); text-underline-offset: 3px; }

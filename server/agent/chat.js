@@ -51,6 +51,10 @@ export async function handleChat(request) {
         'La estructura es año lectivo -> nivel -> grado -> sección. Resuelve los nombres encadenando ' +
         'listar_anios_lectivos, listar_niveles, listar_grados y listar_secciones; nunca pidas ids al usuario. ' +
         'Si no indica el año, usa el año lectivo activo más reciente. Presenta tablas o viñetas. ' +
+        'Organiza todas las respuestas y comentarios en Markdown, con párrafos breves y líneas en blanco entre temas. ' +
+        'Para competencias, usa un encabezado por área y una competencia por línea en listas numeradas, ' +
+        'con numeración continua entre áreas. Para un reporte, pide elegir de 1 a 3 competencias por sus números. ' +
+        'Nunca juntes varias competencias en un párrafo. ' +
         'Si una herramienta falla, explica que no se pudo consultar el dato. Solo puedes consultar información, no modificarla.',
       messages: await convertToModelMessages(messages, { tools }),
       tools,
