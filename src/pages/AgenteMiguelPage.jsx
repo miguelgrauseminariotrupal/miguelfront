@@ -7,7 +7,7 @@ import { isToolUIPart } from "ai";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { formatAgentMessage } from "../utils/formatAgentMessage";
-import { ArrowUp, Bot, FileSpreadsheet, CalendarCheck, ChevronRight, GraduationCap, MessageSquare, PanelLeft, Plus, RotateCcw, Square, Users, X } from "lucide-react";
+import { ArrowUp, Bot, FileSpreadsheet, CalendarCheck, ChevronRight, GraduationCap, Maximize2, MessageSquare, PanelLeft, Plus, RotateCcw, Square, Users, X } from "lucide-react";
 import { createAgentTransport, listChatConversations, getChatMessages } from "../services/agentService";
 import ChatArtifact from "../components/ChatArtifact";
 import { saveChatMessages } from "../utils/chatHistory";
@@ -168,6 +168,25 @@ export default function AgenteMiguelPage() {
   const [activeId, setActiveId] = useState(() => chats[0].id);
   const [historyOpen, setHistoryOpen] = useState(false);
   const historyToggle = useRef(null);
+  const [expanded, setExpanded] = useState(false);
+  const expandToggle = useRef(null);
+  useEffect(() => {
+    if (!expanded) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const restoreWithEscape = event => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setExpanded(false);
+        expandToggle.current?.focus();
+      }
+    };
+    document.addEventListener("keydown", restoreWithEscape, true);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", restoreWithEscape, true);
+    };
+  }, [expanded]);
   const active = chats.find((chat) => chat.id === activeId) || chats[0];
   const save = useCallback((id, messages) => {
     setChats(previous => saveChatMessages(previous, id, messages));
@@ -200,10 +219,11 @@ export default function AgenteMiguelPage() {
   };
   const closeHistory = () => { setHistoryOpen(false); historyToggle.current?.focus(); };
   const renderConversation = selection => historyLoading ? <LoadingBar label="Historial de conversaciones" /> : historyError || messagesError ? <div className="agent-error" role="alert"><p>{historyError || messagesError}</p><button type="button" onClick={() => setRetry(value => value + 1)}>Reintentar</button></div> : active.messages === null ? <LoadingBar label="Mensajes de la conversación" /> : selection ? <Conversation key={`${active.id}-${selection.seccion}`} conversation={active} onSave={save} assignedSelection={selection} /> : <Conversation key={active.id} conversation={active} onSave={save} />;
-  return <main className="page-content agent-page">
+  return <main className={`page-content agent-page${expanded ? " is-expanded" : ""}`}>
     <header className="agent-toolbar">
       <div className="agent-identity"><span className="agent-identity-icon"><Bot size={21} strokeWidth={1.7} aria-hidden="true" /></span><div><h2>Miguel</h2><p>Tu asistente académico</p></div></div>
       <div className="agent-toolbar-actions">
+        <button ref={expandToggle} type="button" className="agent-expand-toggle" onClick={() => setExpanded(value => !value)} aria-label={expanded ? "Volver a pantalla normal" : "Maximizar agente académico"} title={expanded ? "Volver a pantalla normal (Esc)" : "Maximizar agente académico"} aria-pressed={expanded}>{expanded ? <X size={18} /> : <Maximize2 size={18} />}<span>{expanded ? "Restaurar" : "Maximizar"}</span></button>
         <button ref={historyToggle} type="button" className={`agent-history-toggle${historyOpen ? " is-active" : ""}`} onClick={() => setHistoryOpen(value => !value)} aria-label="Mostrar u ocultar historial" aria-expanded={historyOpen} aria-controls="agent-history"><PanelLeft size={17} /><span>Historial</span></button>
         <button type="button" className="agent-new" onClick={startConversation} disabled={historyLoading || Boolean(historyError)} aria-label="Nueva conversación" title="Nueva conversación"><Plus size={17} /><span>Nueva conversación</span></button>
       </div>
